@@ -411,11 +411,7 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
   const info = await transporter.sendMail({
     from: `"Akro Ventures" <${SMTP_USER}>`,
     to: deal.founder_email,
-    cc: [
-      "info@akroventures.com",
-      "akshita.chahande@akroventures.com",
-      "rohit.jain@akroventures.com",
-    ].join(", "),
+    // cc: ["info@akroventures.com","akshita.chahande@akroventures.com","rohit.jain@akroventures.com"].join(", "),
     subject: `Akro Ventures / Re: ${deal.startup_name}`,
     html,
   });
