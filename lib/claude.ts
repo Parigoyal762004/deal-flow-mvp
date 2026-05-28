@@ -1,23 +1,12 @@
 import Groq from "groq-sdk";
 import { extractText } from "unpdf";
 import { AKRO_KNOWLEDGE_BASE } from "./akro-knowledge";
+import { buildPersonalisedDraft } from "./email";
 import type { Deal } from "./types";
 
 export interface ClaudeAnalysis {
   summary: string;
   draftEmail: string;
-}
-
-// ─── Always-reliable founder email template ───────────────────────────────────
-// No AI involved — fires instantly, works for every lead regardless of pitch deck.
-function buildFounderEmail(deal: Deal): string {
-  const firstName = deal.founder_name.split(" ")[0];
-  return (
-    `Hi ${firstName},\n\n` +
-    `We came across ${deal.startup_name} and it caught our attention. We'd love to learn more about what you're building.\n\n` +
-    `At Akro Ventures, we work with founders to structure their capital raise and connect them with the right people. Happy to explore if there's a fit.\n\n` +
-    `Warm regards,\n\nTeam Akro Ventures`
-  );
 }
 
 // ─── Metadata-only summary fallback (no AI) ───────────────────────────────────
@@ -35,7 +24,7 @@ function buildMetaSummary(deal: Deal): string {
 // ─── Main analysis function ───────────────────────────────────────────────────
 export async function analyzePitchDeck(deal: Deal): Promise<ClaudeAnalysis> {
   // Founder email is ALWAYS template-based — fast, reliable, no AI dependency
-  const draftEmail = buildFounderEmail(deal);
+  const draftEmail = buildPersonalisedDraft(deal);
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -126,7 +115,6 @@ Respond with ONLY valid JSON — no markdown, no code fences, no extra text:
     return { summary, draftEmail };
   } catch (err) {
     console.error("[groq] Analysis failed:", err);
-    // AI failed — return metadata summary + reliable template email
-    return { summary: buildMetaSummary(deal), draftEmail };
+    return { summary: buildMetaSummary(deal), draftEmail: buildPersonalisedDraft(deal) };
   }
 }

@@ -309,26 +309,35 @@ function getWhatWeDo(deal: Deal): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ── Build the plain-text draft (stored in DB, shown in approval email) ────────
+export function buildPersonalisedDraft(deal: Deal): string {
+  const firstName = deal.founder_name.split(" ")[0];
+  return [
+    `Hi ${firstName},`,
+    getOpener(deal),
+    getInsight(deal),
+    getWhatWeDo(deal),
+  ].join("\n\n");
+}
+
 // EXTERNAL — Founder response email (clean, personal, not promotional)
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendFounderEmail(deal: Deal): Promise<void> {
-  const firstName = deal.founder_name.split(" ")[0];
-
-  // Build personalised body from form data — no LLM needed
-  const opener    = getOpener(deal);
-  const insight   = getInsight(deal);
-  const whatWeDo  = getWhatWeDo(deal);
-
-  // If internal notes exist and are meaningful, surface one line
-  const notesLine = deal.notes && deal.notes.trim().length > 10
-    ? `<p style="margin:0 0 22px;font-size:15px;color:${TEXT_DARK};line-height:1.85;">${deal.notes.trim().split(/[.!?]/)[0].trim()}.</p>`
-    : "";
+  // Use exactly what the team approved — never regenerate
+  const draftText = deal.draft_email ?? buildPersonalisedDraft(deal);
+  const paragraphsHtml = draftText
+    .split(/\n\n+/)
+    .filter(Boolean)
+    .map((p, i, arr) =>
+      `<p style="margin:0 0 ${i === arr.length - 1 ? "0" : "22px"};font-size:15px;color:${TEXT_DARK};line-height:1.85;">${p.replace(/\n/g, "<br/>")}</p>`
+    )
+    .join("");
 
   const body = `
 <table width="560" cellpadding="0" cellspacing="0"
   style="max-width:560px;width:100%;background:#ffffff;border-radius:6px;border:1px solid ${BORDER};overflow:hidden;">
 
-  <!-- Logo header — explicit white background, dark-mode safe -->
+  <!-- Logo header -->
   <tr>
     <td style="background:#ffffff;padding:20px 28px 16px;border-bottom:3px solid ${GOLD};">
       <img src="${LOGO_URL}" alt="Akro Ventures" height="38"
@@ -336,14 +345,10 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
     </td>
   </tr>
 
-  <!-- Body -->
+  <!-- Body — exactly what the team approved -->
   <tr>
     <td style="padding:30px 28px 8px;">
-      <p style="margin:0 0 22px;font-size:15px;color:${TEXT_DARK};line-height:1.85;">Hi ${firstName},</p>
-      <p style="margin:0 0 22px;font-size:15px;color:${TEXT_DARK};line-height:1.85;">${opener}</p>
-      <p style="margin:0 0 22px;font-size:15px;color:${TEXT_DARK};line-height:1.85;">${insight}</p>
-      ${notesLine}
-      <p style="margin:0 0 0;font-size:15px;color:${TEXT_DARK};line-height:1.85;">${whatWeDo}</p>
+      ${paragraphsHtml}
     </td>
   </tr>
 
