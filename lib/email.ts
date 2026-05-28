@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 import type { Deal } from "./types";
-import { AKRO_LOGO_B64 } from "./logo-b64";
 
 const APP_URL      = process.env.NEXT_PUBLIC_APP_URL ?? "https://deal-flow-mvp.vercel.app";
 const SMTP_USER    = process.env.SMTP_USER ?? "info@akroventures.com";
@@ -332,7 +331,7 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
   <!-- Logo header — explicit white background, dark-mode safe -->
   <tr>
     <td style="background:#ffffff;padding:20px 28px 16px;border-bottom:3px solid ${GOLD};">
-      <img src="${AKRO_LOGO_B64}" alt="Akro Ventures" height="38"
+      <img src="${LOGO_URL}" alt="Akro Ventures" height="38"
         style="height:38px;width:auto;display:block;" />
     </td>
   </tr>
@@ -411,11 +410,7 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
   const info = await transporter.sendMail({
     from: `"Akro Ventures" <${SMTP_USER}>`,
     to: deal.founder_email,
-    cc: [
-      "info@akroventures.com",
-      "akshita.chahande@akroventures.com",
-      "rohit.jain@akroventures.com",
-    ].join(", "),
+    // cc: ["info@akroventures.com","akshita.chahande@akroventures.com","rohit.jain@akroventures.com"].join(", "),
     subject: `Akro Ventures / Re: ${deal.startup_name}`,
     html,
   });
