@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Deal Flow | Akro Ventures",
   description: "Investor deal flow management system",
+  icons: {
+    icon: "/akro-icon.jpg",
+    apple: "/akro-icon.jpg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
