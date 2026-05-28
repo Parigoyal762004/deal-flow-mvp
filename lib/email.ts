@@ -259,7 +259,7 @@ function getOpener(deal: Deal): string {
     case "Backrr":        return `We came across ${n} on Backrr and wanted to reach out.`;
     case "LinkedIn":      return `We noticed ${n} on LinkedIn and thought it was worth a conversation.`;
     case "Referral":      return `We got a warm introduction to ${n} and were glad to hear about what you're building.`;
-    case "Cold Outreach": return `Thanks for reaching out — we've had a look at ${n} and wanted to connect properly.`;
+    case "Cold Outreach": return `Thanks for reaching out. We've had a look at ${n} and wanted to connect properly.`;
     case "Event":         return `It was great connecting recently. We've had a look at ${n} since.`;
     default:              return `We came across ${n} and wanted to reach out directly.`;
   }
@@ -270,17 +270,17 @@ function getInsight(deal: Deal): string {
   const stage = (deal.stage ?? "").replace(/-/g, " ");
 
   const industryMap: Record<string, string> = {
-    "Fintech":      "Getting capital structure right in fintech matters more than most founders realise — the wrong terms early on can close doors with the right investors later.",
+    "Fintech":      "Getting capital structure right in fintech matters more than most founders realise. The wrong terms early on can close doors with the right investors later.",
     "Healthtech":   "Health innovation is hard to fund because most investors don't understand the regulatory layer. That's exactly where having the right advisory makes a difference.",
-    "SaaS":         "SaaS at your stage is about more than ARR — investors want to see a clean story around retention, expansion, and your path to profitability.",
+    "SaaS":         "SaaS at your stage is about more than ARR. Investors want to see a clean story around retention, expansion, and your path to profitability.",
     "Consumer":     "Consumer brands need patient capital and sharp market positioning. Getting both aligned at the right time is what separates the ones that scale from the ones that stall.",
     "Edtech":       "Edtech is seeing renewed investor interest, but the narrative has to be tight. We work with founders to make sure the right people hear the right story.",
     "AI/ML":        "AI startups are getting funded, but investors are cutting through the noise fast. Defensibility, real revenue, and a credible team story are what move the needle.",
     "E-commerce":   "At your stage, e-commerce is about unit economics and the right growth capital. We help founders structure that raise so the terms actually work long-term.",
-    "Agritech":     "Agritech in India is growing fast and attracting serious capital. Getting in front of the right investors early — with the right framing — matters enormously.",
+    "Agritech":     "Agritech in India is growing fast and attracting serious capital. Getting in front of the right investors early, with the right framing, matters enormously.",
     "Logistics":    "Logistics businesses need capital-efficient structures to scale. We've helped founders navigate this and come out with better terms than they expected.",
     "Cleantech":    "Cleantech fundraising has its own language and its own investor base. We help founders bridge that gap and access the right pools of capital.",
-    "Proptech":     "Proptech is complex to fund. Matching the right instrument to your business model — debt, equity, or structured — is something we help founders get right.",
+    "Proptech":     "Proptech is complex to fund. Matching the right instrument to your business model (debt, equity, or structured) is something we help founders get right.",
     "Cybersecurity":"Cybersecurity is one of the most active sectors for institutional capital right now. Positioning your raise correctly can make a significant difference.",
     "Web3/Crypto":  "Web3 fundraising requires a very specific investor set. We work with founders to identify and approach the right capital for their model.",
   };
@@ -288,7 +288,7 @@ function getInsight(deal: Deal): string {
   if (industryMap[industry]) return industryMap[industry];
 
   const stageMap: Record<string, string> = {
-    "pre seed": "At pre-seed, structuring things correctly from the start saves significant pain down the road — and sets you up to raise your next round on your terms.",
+    "pre seed": "At pre-seed, structuring things correctly from the start saves significant pain down the road and sets you up to raise your next round on your terms.",
     "seed":     "Seed stage is where your investor story and your raise structure need to be aligned. Getting this right shapes how your cap table and your options look at Series A.",
     "series a": "Series A requires a different level of rigour than earlier rounds. We work with founders to make sure they're walking into those conversations fully prepared.",
     "series b": "At Series B, the bar is high and diligence is deep. We help founders prepare for that process and make sure the right advisors are in the room.",
@@ -301,10 +301,10 @@ function getInsight(deal: Deal): string {
 function getWhatWeDo(deal: Deal): string {
   const stage = (deal.stage ?? "").replace(/-/g, " ");
   if (stage === "pre seed" || stage === "seed") {
-    return `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make targeted introductions to the right capital partners — so you're not just raising, you're raising right.`;
+    return `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make targeted introductions to the right capital partners. So you're not just raising, you're raising right.`;
   }
   if (stage === "series a" || stage === "series b") {
-    return `At Akro Ventures, we advise growth-stage companies on capital structure, investor positioning, and navigating complex fundraising processes — from preparing the data room to closing the round.`;
+    return `At Akro Ventures, we advise growth-stage companies on capital structure, investor positioning, and navigating complex fundraising processes. From preparing the data room to closing the round.`;
   }
   return `At Akro Ventures, we help founders at every stage structure their capital raise, sharpen their story, and connect with the right investors and advisors for their specific situation.`;
 }
