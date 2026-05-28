@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Deal Review: {{STARTUP_NAME}}</title>
+</head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;">
+
+<!-- Header -->
+<tr><td style="background:#1e3a8a;padding:28px 36px;">
+  <p style="margin:0;color:#93c5fd;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Akro Ventures · Deal Flow</p>
+  <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">New Deal Review Required</h1>
+  <p style="margin:6px 0 0;color:#bfdbfe;font-size:14px;">{{STARTUP_NAME}} · {{STAGE}} · {{INDUSTRY}}</p>
+</td></tr>
+
+<!-- Deal Metadata -->
+<tr><td style="padding:28px 36px 0;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="50%" style="padding-bottom:16px;">
+      <p style="margin:0;font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Founder</p>
+      <p style="margin:4px 0 0;font-size:14px;color:#0f172a;font-weight:500;">{{FOUNDER_NAME}}</p>
+      <p style="margin:2px 0 0;font-size:13px;color:#64748b;">{{FOUNDER_EMAIL}}</p>
+    </td>
+    <td width="50%" style="padding-bottom:16px;">
+      <p style="margin:0;font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Source</p>
+      <p style="margin:4px 0 0;font-size:14px;color:#0f172a;font-weight:500;">{{SOURCE}}</p>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding-bottom:16px;">
+      <p style="margin:0;font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Links</p>
+      <p style="margin:4px 0 0;font-size:13px;">
+        <a href="{{WEBSITE_URL}}" style="color:#4c6ef5;">Website</a> ·
+        <a href="{{LINKEDIN_URL}}" style="color:#4c6ef5;">LinkedIn</a> ·
+        <a href="{{PITCH_DECK_URL}}" style="color:#4c6ef5;">Pitch Deck PDF ↗</a>
+      </p>
+    </td>
+  </tr>
+  </table>
+</td></tr>
+
+<!-- AI Analysis -->
+<tr><td style="padding:20px 36px 0;">
+  <div style="background:#f0f4ff;border-left:3px solid #4c6ef5;border-radius:0 8px 8px 0;padding:16px 20px;">
+    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#4c6ef5;text-transform:uppercase;letter-spacing:0.06em;">AI Analysis</p>
+    <p style="margin:0;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap;">{{AI_SUMMARY}}</p>
+  </div>
+</td></tr>
+
+<!-- Draft Email -->
+<tr><td style="padding:20px 36px 0;">
+  <div style="background:#fafafa;border:1px solid #e2e8f0;border-radius:10px;padding:20px;">
+    <p style="margin:0 0 12px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Draft Email to Founder</p>
+    <p style="margin:0;font-size:13px;color:#0f172a;line-height:1.8;white-space:pre-wrap;">{{DRAFT_EMAIL}}</p>
+  </div>
+</td></tr>
+
+<!-- Approval Buttons -->
+<tr><td style="padding:28px 36px;">
+  <p style="margin:0 0 16px;font-size:13px;color:#64748b;">Click to approve or reject this draft email. Approval sends it directly to the founder.</p>
+  <table cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="padding-right:12px;">
+      <a href="{{APPROVE_URL}}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:8px;">✓ Approve &amp; Send</a>
+    </td>
+    <td>
+      <a href="{{REJECT_URL}}" style="display:inline-block;background:#fff;color:#dc2626;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:8px;border:1.5px solid #dc2626;">✕ Reject</a>
+    </td>
+  </tr>
+  </table>
+  <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;">
+    Approval links are single-use. · <a href="{{DASHBOARD_URL}}" style="color:#4c6ef5;">View Dashboard</a>
+  </p>
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 36px;">
+  <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center;">
+    Akro Ventures · Automated Deal Flow · This email was AI-generated and requires human approval before reaching the founder.
+  </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>
