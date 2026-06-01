@@ -327,11 +327,11 @@ export function buildPersonalisedDraft(deal: Deal): string {
   // 3. SOCIAL PROOF + WHAT AKRO DOES — specific, credible, zero-upfront trust signal
   let akroLine: string;
   if (isGrowth) {
-    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses across India on capital structure, investor introductions, and navigating the next raise. We work on a success fee only — nothing upfront. We get paid when you get funded.`;
+    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses across India on capital structure, investor introductions, and navigating the next raise. We work on a success fee only. Nothing upfront. We get paid when you get funded.`;
   } else if (isEarly) {
-    akroLine = `At Akro Ventures, we have helped 50+ early-stage founders close their rounds — from sharpening the pitch to warm introductions with the right angels, family offices, and VCs. We work on a success fee only, so we are fully aligned with your outcome.`;
+    akroLine = `At Akro Ventures, we have helped 50+ early-stage founders close their rounds, from sharpening the pitch to warm introductions with the right angels, family offices, and VCs. We work on a success fee only, so we are fully aligned with your outcome.`;
   } else {
-    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses on capital structure, investor positioning, and getting the right people into the room. We work on a success fee only — nothing upfront.`;
+    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses on capital structure, investor positioning, and getting the right people into the room. We work on a success fee only. Nothing upfront.`;
   }
 
   return [
