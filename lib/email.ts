@@ -324,14 +324,14 @@ export function buildPersonalisedDraft(deal: Deal): string {
     body = `We have been working with early-stage founders this year on structuring their raise from the start. The founders who get this right in the first round tend to have significantly better options by the time they get to Series A.`;
   }
 
-  // 3. SOCIAL PROOF + WHAT AKRO DOES — one crisp line
+  // 3. SOCIAL PROOF + WHAT AKRO DOES — specific, credible, zero-upfront trust signal
   let akroLine: string;
   if (isGrowth) {
-    akroLine = `At Akro Ventures, we work with founders at your stage on capital structure, investor introductions, and the next raise. We have helped growth-stage companies in India navigate secondary transactions, institutional co-investors, and pre-IPO advisory.`;
+    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses across India on capital structure, investor introductions, and navigating the next raise. We work on a success fee only — nothing upfront. We get paid when you get funded.`;
   } else if (isEarly) {
-    akroLine = `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make targeted introductions. We have helped founders close their first institutional rounds and go into Series A in a much stronger position.`;
+    akroLine = `At Akro Ventures, we have helped 50+ early-stage founders close their rounds — from sharpening the pitch to warm introductions with the right angels, family offices, and VCs. We work on a success fee only, so we are fully aligned with your outcome.`;
   } else {
-    akroLine = `At Akro Ventures, we work with founders on capital structure, investor positioning, and getting the right people into the room at the right time.`;
+    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses on capital structure, investor positioning, and getting the right people into the room. We work on a success fee only — nothing upfront.`;
   }
 
   return [
