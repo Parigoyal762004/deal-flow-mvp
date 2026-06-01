@@ -343,12 +343,13 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
 
 ${paragraphsHtml}
 
-<p>If any of this is relevant, happy to spend 15 minutes on a call. No prep needed on your end. Here is a link to find a time that works: <a href="${CALENDLY_URL}" style="color:#1a1a1a;">${CALENDLY_URL}</a></p>
+<p>Would it make sense to connect for 15 minutes sometime this week?</p>
 
 <p style="margin-top:28px;">
 Rohit Jain<br>
-Akro Ventures<br>
-<a href="mailto:info@akroventures.com" style="color:#1a1a1a;text-decoration:none;">info@akroventures.com</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
+Co-Founder, Akro Ventures<br>
++91 99406 28986<br>
+<a href="mailto:rohit.jain@akroventures.com" style="color:#1a1a1a;text-decoration:none;">rohit.jain@akroventures.com</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
 </p>
 
 </div>
