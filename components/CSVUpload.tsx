@@ -23,17 +23,47 @@ interface RowResult {
 const VALID_SOURCES = ["Backrr", "LinkedIn", "Referral", "Cold Outreach", "Event", "Other"];
 const VALID_STAGES  = ["pre-seed", "seed", "series-a", "series-b", "growth"];
 
-// Flexible column name mapping
+// Flexible column name mapping — handles both deal-form columns AND pipeline output columns
 const COL_MAP: Record<string, keyof DealRow> = {
-  startup_name: "startup_name", startup: "startup_name", company: "startup_name", "company name": "startup_name", name: "startup_name",
+  // Standard deal-form names
+  startup_name: "startup_name", startup: "startup_name", company: "startup_name",
+  "company name": "startup_name", name: "startup_name",
+  // Pipeline output name
+  "company_name": "startup_name",
+
   founder_name: "founder_name", founder: "founder_name", "founder name": "founder_name",
+
   founder_email: "founder_email", email: "founder_email", "founder email": "founder_email",
+  // Pipeline uses "estimated_email"
+  estimated_email: "founder_email", "estimated email": "founder_email",
+
   source: "source",
+
+  // Pipeline uses "sector"
   industry: "industry", sector: "industry",
-  stage: "stage",
+
+  // Pipeline uses "last_funding_round" for stage
+  stage: "stage", "last_funding_round": "stage", "last funding round": "stage", "funding round": "stage",
+
   website_url: "website_url", website: "website_url", url: "website_url",
+  "source_url": "website_url", "source url": "website_url",
+
+  // Pipeline uses "akro_rationale" or "why_akro" for notes
   notes: "notes", note: "notes", comments: "notes",
+  akro_rationale: "notes", "why_akro": "notes", "why akro": "notes",
+  "growth_signal": "notes", "growth signal": "notes",
 };
+
+// Map pipeline funding round labels to valid stage values
+function mapFundingStage(raw: string): string {
+  const s = raw.toLowerCase().trim();
+  if (s.includes("series b") || s.includes("series-b")) return "series-b";
+  if (s.includes("series a") || s.includes("series-a")) return "series-a";
+  if (s.includes("seed"))     return "seed";
+  if (s.includes("pre"))      return "pre-seed";
+  if (s.includes("growth") || s.includes("series c") || s.includes("pre-ipo") || s.includes("ipo")) return "growth";
+  return "seed"; // sensible default for pipeline leads (they are ₹50Cr+)
+}
 
 function parseCSV(text: string): DealRow[] {
   const lines = text.trim().split(/\r?\n/);
@@ -63,10 +93,22 @@ function normaliseSource(raw?: string): string {
 }
 
 function normaliseStage(raw?: string): string {
-  if (!raw) return "pre-seed";
+  if (!raw) return "seed";
   const cleaned = raw.toLowerCase().replace(/\s+/g, "-");
   const match = VALID_STAGES.find(s => s === cleaned);
-  return match ?? "pre-seed";
+  return match ?? mapFundingStage(raw);
+}
+
+const TEMPLATE_CSV = `startup_name,founder_name,founder_email,source,industry,stage,website_url,notes
+Acme Corp,John Smith,john@acme.com,LinkedIn,SaaS,seed,https://acme.com,Strong traction
+XYZ Health,Priya Sharma,priya@xyz.in,Referral,Healthtech,series-a,https://xyz.in,`;
+
+function downloadTemplate() {
+  const blob = new Blob([TEMPLATE_CSV], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), { href: url, download: "akro_deal_template.csv" });
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function CSVUpload() {
@@ -159,9 +201,23 @@ export default function CSVUpload() {
         <FileText className="w-4 h-4 text-slate-400" />
         <h2 className="text-sm font-semibold text-slate-700">Bulk Upload via CSV</h2>
       </div>
-      <p className="text-xs text-slate-500 mb-4">
+      <p className="text-xs text-slate-500 mb-3">
         Upload a CSV with columns: <code className="bg-slate-100 px-1 rounded">startup_name</code>, <code className="bg-slate-100 px-1 rounded">founder_name</code>, <code className="bg-slate-100 px-1 rounded">founder_email</code> (required) + <code className="bg-slate-100 px-1 rounded">source</code>, <code className="bg-slate-100 px-1 rounded">industry</code>, <code className="bg-slate-100 px-1 rounded">stage</code>, <code className="bg-slate-100 px-1 rounded">notes</code> (optional). Max 100 rows.
       </p>
+
+      {/* Pipeline integration notice */}
+      <div className="mb-4 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-800 leading-relaxed">
+        <strong>Using the Lead Research Pipeline?</strong> The pipeline CSV output columns are automatically recognised —
+        {" "}<code className="bg-amber-100 px-1 rounded">company_name</code>, <code className="bg-amber-100 px-1 rounded">estimated_email</code>, <code className="bg-amber-100 px-1 rounded">sector</code>, <code className="bg-amber-100 px-1 rounded">last_funding_round</code>, and <code className="bg-amber-100 px-1 rounded">akro_rationale</code> all map correctly.
+        {" "}Just ask Claude to output a CSV at the end of the research prompt and upload it here directly.
+      </div>
+
+      <button
+        onClick={downloadTemplate}
+        className="text-xs text-brand-600 hover:text-brand-700 underline underline-offset-2 mb-4 block"
+      >
+        Download blank template CSV
+      </button>
 
       {!rows.length && (
         <label className="flex items-center gap-3 cursor-pointer border-2 border-dashed border-slate-200 rounded-xl px-5 py-4 hover:border-brand-300 hover:bg-brand-50 transition-colors w-fit">
