@@ -252,68 +252,93 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
 // PERSONALISATION HELPERS — no LLM, uses form data
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── What Akro does — one crisp sentence matched to stage ────────────────────
-function getAkroLine(deal: Deal): string {
-  const stage = (deal.stage ?? "").replace(/-/g, " ");
-  if (stage === "pre seed" || stage === "seed") {
-    return `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make the right introductions at the right time.`;
+// ─── Extract the most specific data point from pipeline notes ────────────────
+// Notes format: "Key signal about company; Akro rationale"
+// We want the first clause and pull out the most notable number/fact.
+function extractSignal(notes: string): string | null {
+  const firstClause = notes.split(";")[0].trim();
+  // Look for a specific number or milestone
+  const patterns = [
+    /[\d,]+\+?\s*cities/i,
+    /[₹\$][\d.,]+\s*(?:Cr|M|B|Bn)/i,
+    /[\d.]+[xX]\s*(?:revenue|growth|customer)/i,
+    /[\d,]+\+?\s*(?:million|M)\+?\s*(?:users|customers|partners)/i,
+    /Series\s*[A-E]/i,
+    /pre.?IPO/i,
+    /[\d,]+\+?\s*(?:villages|stores|outlets|locations)/i,
+  ];
+  for (const p of patterns) {
+    const m = firstClause.match(p);
+    if (m) return m[0];
   }
-  if (stage === "series a" || stage === "series b") {
-    return `At Akro Ventures, we work with founders at this stage on capital structure, investor positioning, and getting the right advisors into the room before the next round starts.`;
-  }
-  // growth / pre-IPO
-  return `At Akro Ventures, we work with founders at your stage on the next capital move, whether that is a secondary, an institutional co-investor, structured debt, or preparing the business for a public market event.`;
+  return firstClause.length > 10 ? firstClause : null;
 }
 
-// ─── Build email body from what we actually know about the company ────────────
-// If notes exist (pipeline leads always have them), use them as the specific hook.
-// Otherwise fall back to generic industry/stage insight.
-function getBodyParagraph(deal: Deal): string {
+// ─── Subject line — specific beats generic ───────────────────────────────────
+export function buildSubject(deal: Deal): string {
+  const firstName = deal.founder_name.split(" ")[0];
   const stage = (deal.stage ?? "").replace(/-/g, " ");
   const isGrowth = stage === "growth" || stage === "series b" || stage === "series a";
 
-  // Notes from the pipeline contain real intelligence about the company.
-  // Use the first meaningful clause as a specific reference point.
-  if (deal.notes && deal.notes.trim().length > 20) {
-    const note = deal.notes.trim().split(";")[0].trim(); // first clause only
-    if (isGrowth) {
-      return `Companies at this point, ${note.toLowerCase().endsWith(".") ? note.slice(0, -1) : note}, typically face a specific set of questions around the next capital event. Getting the right structure and the right people in place before that conversation starts is where the real leverage is.`;
-    }
-    return `${note}. Getting the right structure and the right advisors in place at this stage shapes how the next round comes together.`;
-  }
-
-  // Fallback: stage-based insight
-  const stageMap: Record<string, string> = {
-    "pre seed": "At pre-seed, structuring things correctly from the start saves significant pain down the road and sets you up to raise your next round on your terms.",
-    "seed":     "Seed stage is where your investor story and your raise structure need to be aligned. Getting this right shapes how your cap table looks at Series A.",
-    "series a": "Series A requires a different level of rigour than earlier rounds. Having the right advisory in the room before those conversations start makes a real difference.",
-    "series b": "At Series B, institutional diligence is deep and the cap table decisions you make here follow you for years. Getting this right matters.",
-    "growth":   "At this stage, the questions shift from whether to raise to how to structure it, who to bring in, and when. That is exactly the kind of conversation we have.",
-  };
-  return stageMap[stage] ?? "Getting the right capital structure and the right advisors in place changes the trajectory of a raise. We have seen this at every stage.";
+  if (isGrowth) return `A question about ${deal.startup_name}`;
+  return `${firstName}, a question about ${deal.startup_name}`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ── Build the plain-text draft (stored in DB, shown in approval email) ────────
+// ─── Build the full personalised email draft ─────────────────────────────────
 export function buildPersonalisedDraft(deal: Deal): string {
-  const firstName = deal.founder_name.split(" ")[0];
-  const n = deal.startup_name;
+  const firstName  = deal.founder_name.split(" ")[0];
+  const n          = deal.startup_name;
+  const stage      = (deal.stage ?? "").replace(/-/g, " ");
+  const isGrowth   = stage === "growth" || stage === "series b" || stage === "series a";
+  const isEarly    = stage === "pre seed" || stage === "seed";
 
-  // Opener: short, source-aware, references the company by name
-  const openerMap: Record<string, string> = {
-    "Backrr":        `We came across ${n} on Backrr and wanted to reach out.`,
-    "LinkedIn":      `We came across ${n} on LinkedIn.`,
-    "Referral":      `We got a warm introduction to ${n} and wanted to follow up directly.`,
-    "Cold Outreach": `Thanks for reaching out. We had a look at ${n} and wanted to connect properly.`,
-    "Event":         `Good to connect recently. We had a look at ${n} since.`,
-  };
-  const opener = openerMap[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out directly.`;
+  // 1. OPENER — specific signal from notes if available, otherwise source-based
+  let opener: string;
+  if (deal.notes && deal.notes.trim().length > 20) {
+    const signal = extractSignal(deal.notes);
+    if (signal && isGrowth) {
+      opener = `We came across ${n} while mapping growth-stage companies in the space. The ${signal} stood out.`;
+    } else if (signal) {
+      opener = `We came across ${n} and had a closer look. The ${signal} caught our attention.`;
+    } else {
+      opener = `We came across ${n} and wanted to reach out directly.`;
+    }
+  } else {
+    const sourceMap: Record<string, string> = {
+      "Backrr":        `We came across ${n} on Backrr and wanted to reach out.`,
+      "LinkedIn":      `We came across ${n} on LinkedIn and had a closer look.`,
+      "Referral":      `We got a warm introduction to ${n} and wanted to follow up directly.`,
+      "Cold Outreach": `Thanks for reaching out. We had a look at ${n} and wanted to connect properly.`,
+      "Event":         `Good to connect recently. We had a closer look at ${n} since.`,
+    };
+    opener = sourceMap[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out directly.`;
+  }
+
+  // 2. BODY — what they are dealing with right now + timing reason
+  let body: string;
+  if (isGrowth) {
+    body = `We have been working with a few PE-backed and growth-stage founders in India this year on exactly the kind of questions that come up at this point. Not the basics of fundraising, but the next move: the right instrument, the right institutional relationships, and how to position the business before that conversation starts. Getting this wrong at your stage is expensive.`;
+  } else if (stage === "series a" || stage === "series b") {
+    body = `We have been working with a handful of Series A and B founders this year on getting the capital structure right before the next round. The decisions you make here shape your cap table and your options for years. Having the right advisory in the room early makes a real difference.`;
+  } else {
+    body = `We have been working with early-stage founders this year on structuring their raise from the start. The founders who get this right in the first round tend to have significantly better options by the time they get to Series A.`;
+  }
+
+  // 3. SOCIAL PROOF + WHAT AKRO DOES — one crisp line
+  let akroLine: string;
+  if (isGrowth) {
+    akroLine = `At Akro Ventures, we work with founders at your stage on capital structure, investor introductions, and the next raise. We have helped growth-stage companies in India navigate secondary transactions, institutional co-investors, and pre-IPO advisory.`;
+  } else if (isEarly) {
+    akroLine = `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make targeted introductions. We have helped founders close their first institutional rounds and go into Series A in a much stronger position.`;
+  } else {
+    akroLine = `At Akro Ventures, we work with founders on capital structure, investor positioning, and getting the right people into the room at the right time.`;
+  }
 
   return [
     `Hi ${firstName},`,
     opener,
-    getBodyParagraph(deal),
-    getAkroLine(deal),
+    body,
+    akroLine,
   ].join("\n\n");
 }
 
@@ -361,7 +386,7 @@ Co-Founder, Akro Ventures<br>
     from: `"Rohit from Akro Ventures" <${SMTP_USER}>`,
     to: deal.founder_email,
     cc: "info@akroventures.com",
-    subject: `${firstName}, a thought on ${deal.startup_name}`,
+    subject: buildSubject(deal),
     html,
   });
   console.log("[email] Founder email sent:", info.messageId);
