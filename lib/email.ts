@@ -252,71 +252,68 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
 // PERSONALISATION HELPERS — no LLM, uses form data
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function getOpener(deal: Deal): string {
-  const n = deal.startup_name;
-  switch (deal.source) {
-    case "Backrr":        return `We came across ${n} on Backrr and wanted to reach out.`;
-    case "LinkedIn":      return `We noticed ${n} on LinkedIn and thought it was worth a conversation.`;
-    case "Referral":      return `We got a warm introduction to ${n} and were glad to hear about what you're building.`;
-    case "Cold Outreach": return `Thanks for reaching out. We've had a look at ${n} and wanted to connect properly.`;
-    case "Event":         return `It was great connecting recently. We've had a look at ${n} since.`;
-    default:              return `We came across ${n} and wanted to reach out directly.`;
-  }
-}
-
-function getInsight(deal: Deal): string {
-  const industry = deal.industry ?? "";
-  const stage = (deal.stage ?? "").replace(/-/g, " ");
-
-  const industryMap: Record<string, string> = {
-    "Fintech":      "Getting capital structure right in fintech matters more than most founders realise. The wrong terms early on can close doors with the right investors later.",
-    "Healthtech":   "Health innovation is hard to fund because most investors don't understand the regulatory layer. That's exactly where having the right advisory makes a difference.",
-    "SaaS":         "SaaS at your stage is about more than ARR. Investors want to see a clean story around retention, expansion, and your path to profitability.",
-    "Consumer":     "Consumer brands need patient capital and sharp market positioning. Getting both aligned at the right time is what separates the ones that scale from the ones that stall.",
-    "Edtech":       "Edtech is seeing renewed investor interest, but the narrative has to be tight. We work with founders to make sure the right people hear the right story.",
-    "AI/ML":        "AI startups are getting funded, but investors are cutting through the noise fast. Defensibility, real revenue, and a credible team story are what move the needle.",
-    "E-commerce":   "At your stage, e-commerce is about unit economics and the right growth capital. We help founders structure that raise so the terms actually work long-term.",
-    "Agritech":     "Agritech in India is growing fast and attracting serious capital. Getting in front of the right investors early, with the right framing, matters enormously.",
-    "Logistics":    "Logistics businesses need capital-efficient structures to scale. We've helped founders navigate this and come out with better terms than they expected.",
-    "Cleantech":    "Cleantech fundraising has its own language and its own investor base. We help founders bridge that gap and access the right pools of capital.",
-    "Proptech":     "Proptech is complex to fund. Matching the right instrument to your business model (debt, equity, or structured) is something we help founders get right.",
-    "Cybersecurity":"Cybersecurity is one of the most active sectors for institutional capital right now. Positioning your raise correctly can make a significant difference.",
-    "Web3/Crypto":  "Web3 fundraising requires a very specific investor set. We work with founders to identify and approach the right capital for their model.",
-  };
-
-  if (industryMap[industry]) return industryMap[industry];
-
-  const stageMap: Record<string, string> = {
-    "pre seed": "At pre-seed, structuring things correctly from the start saves significant pain down the road and sets you up to raise your next round on your terms.",
-    "seed":     "Seed stage is where your investor story and your raise structure need to be aligned. Getting this right shapes how your cap table and your options look at Series A.",
-    "series a": "Series A requires a different level of rigour than earlier rounds. We work with founders to make sure they're walking into those conversations fully prepared.",
-    "series b": "At Series B, the bar is high and diligence is deep. We help founders prepare for that process and make sure the right advisors are in the room.",
-    "growth":   "Growth-stage capital has its own playbook. We help founders identify the right instruments and the right capital partners for where they are.",
-  };
-
-  return stageMap[stage] ?? "Getting the right capital structure and the right advisors in place can change the trajectory of a raise significantly. We've seen this with founders at every stage.";
-}
-
-function getWhatWeDo(deal: Deal): string {
+// ─── What Akro does — one crisp sentence matched to stage ────────────────────
+function getAkroLine(deal: Deal): string {
   const stage = (deal.stage ?? "").replace(/-/g, " ");
   if (stage === "pre seed" || stage === "seed") {
-    return `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make targeted introductions to the right capital partners. So you're not just raising, you're raising right.`;
+    return `At Akro Ventures, we work with early-stage founders to structure their raise, sharpen the investor narrative, and make the right introductions at the right time.`;
   }
   if (stage === "series a" || stage === "series b") {
-    return `At Akro Ventures, we advise growth-stage companies on capital structure, investor positioning, and navigating complex fundraising processes. From preparing the data room to closing the round.`;
+    return `At Akro Ventures, we work with founders at this stage on capital structure, investor positioning, and getting the right advisors into the room before the next round starts.`;
   }
-  return `At Akro Ventures, we help founders at every stage structure their capital raise, sharpen their story, and connect with the right investors and advisors for their specific situation.`;
+  // growth / pre-IPO
+  return `At Akro Ventures, we work with founders at your stage on the next capital move, whether that is a secondary, an institutional co-investor, structured debt, or preparing the business for a public market event.`;
+}
+
+// ─── Build email body from what we actually know about the company ────────────
+// If notes exist (pipeline leads always have them), use them as the specific hook.
+// Otherwise fall back to generic industry/stage insight.
+function getBodyParagraph(deal: Deal): string {
+  const stage = (deal.stage ?? "").replace(/-/g, " ");
+  const isGrowth = stage === "growth" || stage === "series b" || stage === "series a";
+
+  // Notes from the pipeline contain real intelligence about the company.
+  // Use the first meaningful clause as a specific reference point.
+  if (deal.notes && deal.notes.trim().length > 20) {
+    const note = deal.notes.trim().split(";")[0].trim(); // first clause only
+    if (isGrowth) {
+      return `Companies at this point, ${note.toLowerCase().endsWith(".") ? note.slice(0, -1) : note}, typically face a specific set of questions around the next capital event. Getting the right structure and the right people in place before that conversation starts is where the real leverage is.`;
+    }
+    return `${note}. Getting the right structure and the right advisors in place at this stage shapes how the next round comes together.`;
+  }
+
+  // Fallback: stage-based insight
+  const stageMap: Record<string, string> = {
+    "pre seed": "At pre-seed, structuring things correctly from the start saves significant pain down the road and sets you up to raise your next round on your terms.",
+    "seed":     "Seed stage is where your investor story and your raise structure need to be aligned. Getting this right shapes how your cap table looks at Series A.",
+    "series a": "Series A requires a different level of rigour than earlier rounds. Having the right advisory in the room before those conversations start makes a real difference.",
+    "series b": "At Series B, institutional diligence is deep and the cap table decisions you make here follow you for years. Getting this right matters.",
+    "growth":   "At this stage, the questions shift from whether to raise to how to structure it, who to bring in, and when. That is exactly the kind of conversation we have.",
+  };
+  return stageMap[stage] ?? "Getting the right capital structure and the right advisors in place changes the trajectory of a raise. We have seen this at every stage.";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ── Build the plain-text draft (stored in DB, shown in approval email) ────────
 export function buildPersonalisedDraft(deal: Deal): string {
   const firstName = deal.founder_name.split(" ")[0];
+  const n = deal.startup_name;
+
+  // Opener: short, source-aware, references the company by name
+  const openerMap: Record<string, string> = {
+    "Backrr":        `We came across ${n} on Backrr and wanted to reach out.`,
+    "LinkedIn":      `We came across ${n} on LinkedIn.`,
+    "Referral":      `We got a warm introduction to ${n} and wanted to follow up directly.`,
+    "Cold Outreach": `Thanks for reaching out. We had a look at ${n} and wanted to connect properly.`,
+    "Event":         `Good to connect recently. We had a look at ${n} since.`,
+  };
+  const opener = openerMap[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out directly.`;
+
   return [
     `Hi ${firstName},`,
-    getOpener(deal),
-    getInsight(deal),
-    getWhatWeDo(deal),
+    opener,
+    getBodyParagraph(deal),
+    getAkroLine(deal),
   ].join("\n\n");
 }
 
@@ -346,7 +343,7 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
 
 ${paragraphsHtml}
 
-<p>If any of this is relevant, happy to spend 15 minutes on a call — no prep needed on your end. Here is a link to find a time that works: <a href="${CALENDLY_URL}" style="color:#1a1a1a;">${CALENDLY_URL}</a></p>
+<p>If any of this is relevant, happy to spend 15 minutes on a call. No prep needed on your end. Here is a link to find a time that works: <a href="${CALENDLY_URL}" style="color:#1a1a1a;">${CALENDLY_URL}</a></p>
 
 <p style="margin-top:28px;">
 Rohit Jain<br>
