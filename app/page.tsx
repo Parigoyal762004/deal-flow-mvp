@@ -1,4 +1,5 @@
 import { DealForm } from "@/components/DealForm";
+import CSVUpload from "@/components/CSVUpload";
 
 export default function HomePage() {
   return (
@@ -18,6 +19,7 @@ export default function HomePage() {
       </div>
 
       <DealForm />
+      <CSVUpload />
     </div>
   );
 }

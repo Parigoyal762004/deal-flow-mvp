@@ -320,103 +320,50 @@ export function buildPersonalisedDraft(deal: Deal): string {
   ].join("\n\n");
 }
 
-// EXTERNAL — Founder response email (clean, personal, not promotional)
+// EXTERNAL — Founder email. Looks like a real person typed it. No logo, no colors, no buttons.
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendFounderEmail(deal: Deal): Promise<void> {
-  // Use exactly what the team approved — never regenerate
+  const firstName = deal.founder_name.split(" ")[0];
+
+  // Use exactly what the team approved — never regenerate content
   const draftText = deal.draft_email ?? buildPersonalisedDraft(deal);
+
+  // Convert plain text paragraphs to minimal HTML — looks like typed in Gmail
   const paragraphsHtml = draftText
     .split(/\n\n+/)
     .filter(Boolean)
-    .map((p, i, arr) =>
-      `<p style="margin:0 0 ${i === arr.length - 1 ? "0" : "22px"};font-size:15px;color:${TEXT_DARK};line-height:1.85;">${p.replace(/\n/g, "<br/>")}</p>`
-    )
-    .join("");
-
-  const body = `
-<table width="560" cellpadding="0" cellspacing="0"
-  style="max-width:560px;width:100%;background:#ffffff;border-radius:6px;border:1px solid ${BORDER};overflow:hidden;">
-
-  <!-- Logo header -->
-  <tr>
-    <td style="background:#ffffff;padding:20px 28px 16px;border-bottom:3px solid ${GOLD};">
-      <img src="${LOGO_URL}" alt="Akro Ventures" height="38"
-        style="height:38px;width:auto;display:block;" />
-    </td>
-  </tr>
-
-  <!-- Body — exactly what the team approved -->
-  <tr>
-    <td style="padding:30px 28px 8px;">
-      ${paragraphsHtml}
-    </td>
-  </tr>
-
-  <!-- CTA — simple, not a marketing banner -->
-  <tr>
-    <td style="padding:28px 28px 28px;">
-      <p style="margin:0 0 14px;font-size:14px;color:${TEXT_MID};line-height:1.6;">
-        If you'd like to explore this, we're happy to start with a quick 15-minute call. No preparation needed.
-      </p>
-      <a href="${CALENDLY_URL}"
-        style="display:inline-block;background:${TEAL};color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:12px 24px;border-radius:5px;letter-spacing:0.02em;">
-        Book a 15-min call &rarr;
-      </a>
-    </td>
-  </tr>
-
-  <!-- Divider -->
-  <tr>
-    <td style="padding:0 28px;"><div style="height:1px;background:${BORDER};"></div></td>
-  </tr>
-
-  <!-- Signature -->
-  <tr>
-    <td style="padding:22px 28px 28px;">
-      <p style="margin:0 0 2px;font-size:14px;color:${TEXT_DARK};line-height:1.6;">Warm regards,</p>
-      <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:${TEXT_DARK};">Team Akro Ventures</p>
-      <p style="margin:0;font-size:12px;color:${TEXT_SOFT};line-height:1.8;">
-        <a href="mailto:info@akroventures.com" style="color:${TEAL};text-decoration:none;">info@akroventures.com</a>
-        &nbsp;&middot;&nbsp;
-        <a href="https://akroventures.com" style="color:${TEAL};text-decoration:none;">akroventures.com</a>
-      </p>
-    </td>
-  </tr>
-
-</table>`;
+    .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta name="color-scheme" content="light only"/>
-<meta name="supported-color-schemes" content="light"/>
-<style>
-  :root { color-scheme: light only; }
-  body  { margin:0; padding:0; background:#f0f2f0; font-family: -apple-system, 'Segoe UI', Arial, sans-serif; }
-  table { border-collapse:collapse; }
-  img   { border:0; }
-  a     { color:${TEAL}; }
-  @media only screen and (max-width:600px) {
-    .wrapper { padding: 16px 8px !important; }
-    table[width="560"] { width: 100% !important; }
-  }
-</style>
 </head>
-<body>
-<table class="wrapper" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f0;padding:32px 16px;">
-<tr><td align="center">${body}</td></tr>
-</table>
+<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.75;">
+<div style="max-width:560px;padding:32px 20px;">
+
+${paragraphsHtml}
+
+<p>If any of this is relevant, happy to spend 15 minutes on a call — no prep needed on your end. Here is a link to find a time that works: <a href="${CALENDLY_URL}" style="color:#1a1a1a;">${CALENDLY_URL}</a></p>
+
+<p style="margin-top:28px;">
+Rohit Jain<br>
+Akro Ventures<br>
+<a href="mailto:info@akroventures.com" style="color:#1a1a1a;text-decoration:none;">info@akroventures.com</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
+</p>
+
+</div>
 </body>
 </html>`;
 
   const transporter = createTransport();
   const info = await transporter.sendMail({
-    from: `"Akro Ventures" <${SMTP_USER}>`,
+    from: `"Rohit from Akro Ventures" <${SMTP_USER}>`,
     to: deal.founder_email,
     cc: "info@akroventures.com",
-    subject: `Akro Ventures / Re: ${deal.startup_name}`,
+    subject: `${firstName}, a thought on ${deal.startup_name}`,
     html,
   });
   console.log("[email] Founder email sent:", info.messageId);
