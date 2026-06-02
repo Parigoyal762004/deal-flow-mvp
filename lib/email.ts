@@ -284,59 +284,58 @@ export function buildSubject(deal: Deal): string {
   return `${firstName}, a question about ${deal.startup_name}`;
 }
 
-// ─── Bullet points — what Akro specifically does for this company's stage ─────
+// ─── Bullet points — plain, human, no jargon, no em dashes ──────────────────
 function getBullets(deal: Deal): string[] {
-  const stage    = (deal.stage ?? "").replace(/-/g, " ");
-  const industry = deal.industry ?? "";
+  const stage      = (deal.stage ?? "").replace(/-/g, " ");
+  const industry   = deal.industry ?? "";
   const assetHeavy = ["Manufacturing","Logistics","Real Estate","Facility Management","Agritech","Infrastructure"].includes(industry);
 
   if (stage === "growth") {
     return [
-      "Structure the next capital move — secondary, institutional co-investor, or structured debt",
-      "Build the right investor relationships before you need them at the table",
-      "Advisory on deal terms, cap table, and pre-IPO positioning",
+      "Figuring out what your next raise looks like, who comes in, and on what terms",
+      "Getting you in front of investors who are actually writing cheques in your sector right now",
+      "Making sure the deal structure and terms work in your favour before you sit across from anyone",
     ];
   }
   if (stage === "series b") {
     return [
-      "Navigate the Series C raise — investor targeting, narrative, and process management",
-      "Cap table clean-up and term sheet advisory before you sit across from a lead investor",
-      "Introductions to institutional funds and family offices actively deploying in your sector",
+      "Walking you into your next round fully prepared, from narrative to close",
+      "Introductions to institutional funds and family offices that are active right now",
+      "Getting your cap table and terms clean before the next lead investor shows up",
     ];
   }
   if (stage === "series a") {
     return [
-      "End-to-end Series B fundraising support — from pitch to close",
-      "Investor introductions across angels, family offices, and institutional VCs",
-      "Financial model, valuation benchmarking, and term sheet review",
+      "Running your next round end to end, from first pitch to signed term sheet",
+      "Introductions to VCs, family offices, and angels who are active in your space",
+      "Building the financial model and story that gets you in the room",
     ];
   }
   if (stage === "seed") {
     if (assetHeavy) {
       return [
-        "Structure your raise so it does not close doors at Series A",
-        "Working capital facilities and debt options alongside equity",
-        "Investor narrative and introductions to the right early-stage funds",
+        "Structuring your raise so you are not giving away too much too early",
+        "Working capital and debt options alongside equity, so you have choices",
+        "Getting your pitch in front of the right early-stage investors",
       ];
     }
     return [
-      "Structure your raise so it does not close doors at Series A",
-      "Investor narrative coaching and financial model build",
-      "Warm introductions to angels and early-stage VCs in India",
+      "Structuring your raise so you are not giving away too much too early",
+      "Getting your pitch and numbers into a shape investors actually respond to",
+      "Warm introductions to angels and early-stage funds in India",
     ];
   }
   if (assetHeavy) {
     return [
-      "Secured and unsecured business loans against assets you already own",
-      "Working capital without diluting equity",
-      "Project funding for capex — milestone-based, up to Rs 100Cr+",
+      "Getting you working capital without giving up equity",
+      "Loans against assets you already own, at terms that actually work",
+      "Funding for expansion and capex without dilution",
     ];
   }
-  // pre-seed default
   return [
-    "Get your pitch and financials investor-ready",
-    "Identify the right capital path for your stage",
-    "Introductions to the right angels and early-stage funds",
+    "Getting your pitch and numbers into shape before you talk to anyone",
+    "Figuring out how much to raise, from whom, and on what terms",
+    "Connecting you with the right angels for your stage",
   ];
 }
 
@@ -347,20 +346,20 @@ export function buildPersonalisedDraft(deal: Deal): string {
   const stage     = (deal.stage ?? "").replace(/-/g, " ");
   const isGrowth  = stage === "growth" || stage === "series b" || stage === "series a";
 
-  // Opener — one line, specific
+  // Opener: one line, specific to the company
   let opener: string;
   if (deal.notes && deal.notes.trim().length > 20) {
     const signal = extractSignal(deal.notes);
     opener = signal
-      ? `We came across ${n}${isGrowth ? " while mapping growth-stage companies in the space" : ""}. The ${signal} caught our attention.`
+      ? `We came across ${n}${isGrowth ? " while looking at growth-stage companies in the space" : ""}. The ${signal} caught our attention.`
       : `We came across ${n} and wanted to reach out directly.`;
   } else {
     const src: Record<string, string> = {
       "LinkedIn":      `We came across ${n} on LinkedIn.`,
       "Backrr":        `We came across ${n} on Backrr.`,
-      "Referral":      `We got a warm introduction to ${n} and wanted to follow up.`,
-      "Cold Outreach": `Thanks for reaching out — we had a closer look at ${n}.`,
-      "Event":         `Good to connect recently. We had a closer look at ${n} since.`,
+      "Referral":      `We got a warm intro to ${n} and wanted to follow up.`,
+      "Cold Outreach": `Thanks for reaching out. We had a closer look at ${n}.`,
+      "Event":         `Good to connect recently. Had a closer look at ${n} since.`,
     };
     opener = src[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out.`;
   }
@@ -370,8 +369,8 @@ export function buildPersonalisedDraft(deal: Deal): string {
   return [
     `Hi ${firstName},`,
     opener,
-    `Here is what we work on with founders at your stage:\n\n${bullets}`,
-    `We are Akro Ventures — a capital advisory firm. We have worked with 50+ founders across India. Success fee only, nothing upfront.`,
+    `A few things we help with at your stage:\n\n${bullets}`,
+    `We are Akro Ventures. We have helped 50+ founders raise capital in India. We work on a success fee, nothing upfront.`,
   ].join("\n\n");
 }
 
