@@ -284,65 +284,135 @@ export function buildSubject(deal: Deal): string {
   return `${firstName}, a question about ${deal.startup_name}`;
 }
 
-// ─── Build the full personalised email draft ─────────────────────────────────
-export function buildPersonalisedDraft(deal: Deal): string {
-  const firstName  = deal.founder_name.split(" ")[0];
-  const n          = deal.startup_name;
-  const stage      = (deal.stage ?? "").replace(/-/g, " ");
-  const isGrowth   = stage === "growth" || stage === "series b" || stage === "series a";
-  const isEarly    = stage === "pre seed" || stage === "seed";
+// ─── Bullet points — what Akro specifically does for this company's stage ─────
+function getBullets(deal: Deal): string[] {
+  const stage    = (deal.stage ?? "").replace(/-/g, " ");
+  const industry = deal.industry ?? "";
+  const assetHeavy = ["Manufacturing","Logistics","Real Estate","Facility Management","Agritech","Infrastructure"].includes(industry);
 
-  // 1. OPENER — specific signal from notes if available, otherwise source-based
+  if (stage === "growth") {
+    return [
+      "Structure the next capital move — secondary, institutional co-investor, or structured debt",
+      "Build the right investor relationships before you need them at the table",
+      "Advisory on deal terms, cap table, and pre-IPO positioning",
+    ];
+  }
+  if (stage === "series b") {
+    return [
+      "Navigate the Series C raise — investor targeting, narrative, and process management",
+      "Cap table clean-up and term sheet advisory before you sit across from a lead investor",
+      "Introductions to institutional funds and family offices actively deploying in your sector",
+    ];
+  }
+  if (stage === "series a") {
+    return [
+      "End-to-end Series B fundraising support — from pitch to close",
+      "Investor introductions across angels, family offices, and institutional VCs",
+      "Financial model, valuation benchmarking, and term sheet review",
+    ];
+  }
+  if (stage === "seed") {
+    if (assetHeavy) {
+      return [
+        "Structure your raise so it does not close doors at Series A",
+        "Working capital facilities and debt options alongside equity",
+        "Investor narrative and introductions to the right early-stage funds",
+      ];
+    }
+    return [
+      "Structure your raise so it does not close doors at Series A",
+      "Investor narrative coaching and financial model build",
+      "Warm introductions to angels and early-stage VCs in India",
+    ];
+  }
+  if (assetHeavy) {
+    return [
+      "Secured and unsecured business loans against assets you already own",
+      "Working capital without diluting equity",
+      "Project funding for capex — milestone-based, up to Rs 100Cr+",
+    ];
+  }
+  // pre-seed default
+  return [
+    "Get your pitch and financials investor-ready",
+    "Identify the right capital path for your stage",
+    "Introductions to the right angels and early-stage funds",
+  ];
+}
+
+// ─── Build plain-text draft (stored in DB, shown in approval email preview) ───
+export function buildPersonalisedDraft(deal: Deal): string {
+  const firstName = deal.founder_name.split(" ")[0];
+  const n         = deal.startup_name;
+  const stage     = (deal.stage ?? "").replace(/-/g, " ");
+  const isGrowth  = stage === "growth" || stage === "series b" || stage === "series a";
+
+  // Opener — one line, specific
   let opener: string;
   if (deal.notes && deal.notes.trim().length > 20) {
     const signal = extractSignal(deal.notes);
-    if (signal && isGrowth) {
-      opener = `We came across ${n} while mapping growth-stage companies in the space. The ${signal} stood out.`;
-    } else if (signal) {
-      opener = `We came across ${n} and had a closer look. The ${signal} caught our attention.`;
-    } else {
-      opener = `We came across ${n} and wanted to reach out directly.`;
-    }
+    opener = signal
+      ? `We came across ${n}${isGrowth ? " while mapping growth-stage companies in the space" : ""}. The ${signal} caught our attention.`
+      : `We came across ${n} and wanted to reach out directly.`;
   } else {
-    const sourceMap: Record<string, string> = {
-      "Backrr":        `We came across ${n} on Backrr and wanted to reach out.`,
-      "LinkedIn":      `We came across ${n} on LinkedIn and had a closer look.`,
-      "Referral":      `We got a warm introduction to ${n} and wanted to follow up directly.`,
-      "Cold Outreach": `Thanks for reaching out. We had a look at ${n} and wanted to connect properly.`,
+    const src: Record<string, string> = {
+      "LinkedIn":      `We came across ${n} on LinkedIn.`,
+      "Backrr":        `We came across ${n} on Backrr.`,
+      "Referral":      `We got a warm introduction to ${n} and wanted to follow up.`,
+      "Cold Outreach": `Thanks for reaching out — we had a closer look at ${n}.`,
       "Event":         `Good to connect recently. We had a closer look at ${n} since.`,
     };
-    opener = sourceMap[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out directly.`;
+    opener = src[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out.`;
   }
 
-  // 2. BODY — what they are dealing with right now + timing reason
-  let body: string;
-  if (isGrowth) {
-    body = `We have been working with a few PE-backed and growth-stage founders in India this year on exactly the kind of questions that come up at this point. Not the basics of fundraising, but the next move: the right instrument, the right institutional relationships, and how to position the business before that conversation starts. Getting this wrong at your stage is expensive.`;
-  } else if (stage === "series a" || stage === "series b") {
-    body = `We have been working with a handful of Series A and B founders this year on getting the capital structure right before the next round. The decisions you make here shape your cap table and your options for years. Having the right advisory in the room early makes a real difference.`;
-  } else {
-    body = `We have been working with early-stage founders this year on structuring their raise from the start. The founders who get this right in the first round tend to have significantly better options by the time they get to Series A.`;
-  }
-
-  // 3. SOCIAL PROOF + WHAT AKRO DOES — specific, credible, zero-upfront trust signal
-  let akroLine: string;
-  if (isGrowth) {
-    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses across India on capital structure, investor introductions, and navigating the next raise. We work on a success fee only, nothing upfront.`;
-  } else if (isEarly) {
-    akroLine = `At Akro Ventures, we have helped 50+ early-stage founders close their rounds, from sharpening the pitch to warm introductions with the right angels, family offices, and VCs. We work on a success fee only, so we are fully aligned with your outcome.`;
-  } else {
-    akroLine = `At Akro Ventures, we have worked with 50+ founders and businesses on capital structure, investor positioning, and getting the right people into the room. We work on a success fee only. Nothing upfront.`;
-  }
+  const bullets = getBullets(deal).map(b => `• ${b}`).join("\n");
 
   return [
     `Hi ${firstName},`,
     opener,
-    body,
-    akroLine,
+    `Here is what we work on with founders at your stage:\n\n${bullets}`,
+    `We are Akro Ventures — a capital advisory firm. We have worked with 50+ founders across India. Success fee only, nothing upfront.`,
   ].join("\n\n");
 }
 
-// EXTERNAL — Founder email. Looks like a real person typed it. No logo, no colors, no buttons.
+// ─── Service pills — 2-3 contextual services shown after signature ────────────
+function getServicePills(deal: Deal): { label: string; url: string }[] {
+  const stage = (deal.stage ?? "").replace(/-/g, " ");
+  const industry = deal.industry ?? "";
+
+  // Growth / pre-IPO stage
+  if (stage === "growth" || stage === "series b") {
+    return [
+      { label: "Capital Structuring",     url: "https://akroventures.com/services" },
+      { label: "Investor Introductions",  url: "https://akroventures.com/services" },
+      { label: "Pre-IPO Advisory",        url: "https://akroventures.com/services" },
+    ];
+  }
+  // Series A
+  if (stage === "series a") {
+    return [
+      { label: "Startup Fundraising",     url: "https://akroventures.com/services" },
+      { label: "Capital Structuring",     url: "https://akroventures.com/services" },
+      { label: "Investor Introductions",  url: "https://akroventures.com/services" },
+    ];
+  }
+  // Debt-likely industries
+  if (["Manufacturing", "Logistics", "Real Estate", "Facility Management", "Agritech"].includes(industry)) {
+    return [
+      { label: "Startup Fundraising",     url: "https://akroventures.com/services" },
+      { label: "Secured Loans",           url: "https://akroventures.com/services" },
+      { label: "Project Funding",         url: "https://akroventures.com/services" },
+    ];
+  }
+  // Early stage default
+  return [
+    { label: "Startup Fundraising",       url: "https://akroventures.com/services" },
+    { label: "Startup Consultation",      url: "https://akroventures.com/services" },
+    { label: "Investor Introductions",    url: "https://akroventures.com/services" },
+  ];
+}
+
+// EXTERNAL — Founder email. Personal plain-text body + minimal service context footer.
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendFounderEmail(deal: Deal): Promise<void> {
   const firstName = deal.founder_name.split(" ")[0];
@@ -350,12 +420,29 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
   // Use exactly what the team approved — never regenerate content
   const draftText = deal.draft_email ?? buildPersonalisedDraft(deal);
 
-  // Convert plain text paragraphs to minimal HTML — looks like typed in Gmail
+  // Convert plain text to HTML — bullet lines (• ...) become <li>, rest become <p>
   const paragraphsHtml = draftText
     .split(/\n\n+/)
     .filter(Boolean)
-    .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .map(block => {
+      const lines = block.split("\n");
+      const bulletLines = lines.filter(l => l.startsWith("• "));
+      const textLines   = lines.filter(l => !l.startsWith("• "));
+      const parts: string[] = [];
+      if (textLines.length) parts.push(`<p style="margin:0 0 12px;">${textLines.join("<br>")}</p>`);
+      if (bulletLines.length) {
+        const items = bulletLines.map(l => `<li style="margin-bottom:6px;">${l.replace(/^• /, "")}</li>`).join("\n");
+        parts.push(`<ul style="margin:0 0 16px;padding-left:20px;color:#374151;">${items}</ul>`);
+      }
+      return parts.join("\n");
+    })
     .join("\n");
+
+  // Service pills — subtle, skimmable, contextually selected
+  const pills = getServicePills(deal);
+  const pillsHtml = pills
+    .map(p => `<a href="${p.url}" style="display:inline-block;margin:0 6px 6px 0;padding:5px 12px;border:1px solid #d1d5db;border-radius:3px;font-size:12px;color:#374151;text-decoration:none;">${p.label}</a>`)
+    .join("");
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -376,6 +463,11 @@ Co-Founder, Akro Ventures<br>
 +91 99406 28986<br>
 <a href="mailto:rohit.jain@akroventures.com" style="color:#1a1a1a;text-decoration:none;">rohit.jain@akroventures.com</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
 </p>
+
+<div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;">
+  <p style="margin:0 0 10px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">What we help with</p>
+  ${pillsHtml}
+</div>
 
 </div>
 </body>
