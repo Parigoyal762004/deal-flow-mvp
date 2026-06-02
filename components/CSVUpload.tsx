@@ -92,7 +92,7 @@ function parseCSV(text: string): DealRow[] {
       const row: Partial<DealRow> = {};
       cols.forEach((val, i) => {
         const field = mappedHeaders[i];
-        if (field) row[field] = val.replace(/^"|"$/g, "").trim();
+        if (field && field !== "emailEstimated") (row as Record<string, string>)[field] = val.replace(/^"|"$/g, "").trim();
       });
       return row as DealRow;
     })
