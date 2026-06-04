@@ -185,11 +185,20 @@ export default function CSVUpload() {
 
           setRows(prev => prev.map((r, idx) => {
             if (idx !== i) return r;
-            if (data.found && data.email) {
+            if (data.found && data.email && data.verified) {
+              // Found AND verified deliverable
               return {
                 ...r,
                 row: { ...r.row, founder_email: data.email, emailEstimated: false },
                 lookupStatus: "found",
+              };
+            }
+            if (data.found && data.email && !data.verified) {
+              // Found but couldn't confirm deliverability — show it but flag for manual check
+              return {
+                ...r,
+                row: { ...r.row, founder_email: data.email },
+                lookupStatus: "not_found", // keep as needs-review
               };
             }
             return { ...r, lookupStatus: "not_found" };
