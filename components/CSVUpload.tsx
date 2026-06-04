@@ -19,6 +19,7 @@ interface RowResult {
   row: DealRow;
   status: "pending" | "submitting" | "done" | "error";
   error?: string;
+  lookupStatus?: "searching" | "found" | "not_found"; // Hunter.io result
 }
 
 const VALID_SOURCES = ["Backrr", "LinkedIn", "Referral", "Cold Outreach", "Event", "Other"];
@@ -148,7 +149,7 @@ export default function CSVUpload() {
     if (!file.name.endsWith(".csv")) { setError("Please upload a .csv file."); return; }
     if (file.size > 500_000) { setError("File too large. Keep it under 500KB."); return; }
     const reader = new FileReader();
-    reader.onload = ev => {
+    reader.onload = async ev => {
       const text = ev.target?.result as string;
       const parsed = parseCSV(text);
       if (!parsed.length) {
@@ -156,7 +157,49 @@ export default function CSVUpload() {
         return;
       }
       if (parsed.length > 100) { setError("Max 100 deals per upload."); return; }
-      setRows(parsed.map(row => ({ row, status: "pending" })));
+
+      // Set rows immediately so UI shows up
+      setRows(parsed.map(row => ({
+        row,
+        status: "pending",
+        lookupStatus: row.emailEstimated ? "searching" : undefined,
+      })));
+
+      // Auto-lookup estimated emails via Hunter.io one by one
+      for (let i = 0; i < parsed.length; i++) {
+        const row = parsed[i];
+        if (!row.emailEstimated) continue;
+
+        const nameParts = row.founder_name.trim().split(/\s+/);
+        const firstName = nameParts[0];
+        const lastName  = nameParts.slice(1).join(" ") || undefined;
+        const domain    = row.website_url ?? row.founder_email.split("@")[1];
+
+        try {
+          const res  = await fetch("/api/find-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ firstName, lastName, domain }),
+          });
+          const data = await res.json();
+
+          setRows(prev => prev.map((r, idx) => {
+            if (idx !== i) return r;
+            if (data.found && data.email) {
+              return {
+                ...r,
+                row: { ...r.row, founder_email: data.email, emailEstimated: false },
+                lookupStatus: "found",
+              };
+            }
+            return { ...r, lookupStatus: "not_found" };
+          }));
+        } catch {
+          setRows(prev => prev.map((r, idx) =>
+            idx === i ? { ...r, lookupStatus: "not_found" } : r
+          ));
+        }
+      }
     };
     reader.readAsText(file);
   }
@@ -299,7 +342,17 @@ export default function CSVUpload() {
                     <td className="px-4 py-2.5 font-medium text-slate-800 truncate max-w-[140px]">{r.row.startup_name}</td>
                     <td className="px-4 py-2.5 text-slate-600 truncate max-w-[120px]">{r.row.founder_name}</td>
                     <td className="px-3 py-2 max-w-[220px]">
-                      {r.row.emailEstimated && r.status === "pending" ? (
+                      {r.lookupStatus === "searching" ? (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Looking up on Hunter...
+                        </div>
+                      ) : r.lookupStatus === "found" ? (
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
+                          <span className="text-xs text-green-700 font-medium truncate">{r.row.founder_email}</span>
+                        </div>
+                      ) : r.row.emailEstimated && r.status === "pending" ? (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
                             <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
@@ -327,8 +380,10 @@ export default function CSVUpload() {
                     </td>
                     <td className="px-4 py-2.5 text-slate-500 text-xs">{normaliseStage(r.row.stage)}</td>
                     <td className="px-4 py-2.5 text-right">
-                      {r.status === "pending" && r.row.emailEstimated && <span className="text-amber-500 text-xs font-medium">Verify email</span>}
-                      {r.status === "pending" && !r.row.emailEstimated && <span className="text-slate-400 text-xs">Ready</span>}
+                      {r.status === "pending" && r.lookupStatus === "searching" && <span className="text-slate-400 text-xs">Searching...</span>}
+                      {r.status === "pending" && r.lookupStatus === "found"     && <span className="text-green-600 text-xs font-medium">Verified</span>}
+                      {r.status === "pending" && r.lookupStatus === "not_found" && r.row.emailEstimated && <span className="text-amber-500 text-xs font-medium">Verify email</span>}
+                      {r.status === "pending" && !r.row.emailEstimated && !r.lookupStatus && <span className="text-slate-400 text-xs">Ready</span>}
                       {r.status === "submitting" && <Loader2 className="w-4 h-4 animate-spin text-brand-500 ml-auto" />}
                       {r.status === "done"       && <CheckCircle className="w-4 h-4 text-green-500 ml-auto" />}
                       {r.status === "error"      && <span className="text-red-500 text-xs" title={r.error}>Failed</span>}
