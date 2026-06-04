@@ -284,93 +284,103 @@ export function buildSubject(deal: Deal): string {
   return `${firstName}, a question about ${deal.startup_name}`;
 }
 
-// ─── Bullet points — plain, human, no jargon, no em dashes ──────────────────
+// ─── The nerve — one sentence that hits what's actually on their mind ─────────
+function getNerveLine(deal: Deal): string {
+  const stage      = (deal.stage ?? "").replace(/-/g, " ");
+  const industry   = deal.industry ?? "";
+  const assetHeavy = ["Manufacturing","Logistics","Real Estate","Facility Management","Agritech","Infrastructure"].includes(industry);
+
+  if (stage === "growth")   return `Most founders we speak to at this stage are working through the same question: what the next capital move looks like, and whether they are talking to the right people before they need them.`;
+  if (stage === "series b") return `Most Series B founders we speak to are thinking about the same thing: whether their narrative and cap table are ready for institutional scrutiny at the next round.`;
+  if (stage === "series a") return `Most Series A founders we speak to realise the story that worked for angels is not the same story institutional investors need to hear. That gap is something we help close.`;
+  if (stage === "seed" && assetHeavy) return `Most founders we meet at seed stage say the same thing later: they wish they had thought about the terms of their first round before they signed them.`;
+  if (stage === "seed")     return `Most seed-stage founders we work with say the same thing: they had no idea how much the structure of the first round would shape everything that came after.`;
+  if (assetHeavy)           return `Most business owners we speak to are sitting on more borrowing capacity than they realise. The problem is not the business, it is how the application is structured.`;
+  return `Most founders we speak to at your stage are figuring out the same thing: how to raise without giving away too much, and how to find the right people to talk to.`;
+}
+
+// ─── Bullets — what Akro specifically does, plain and human ──────────────────
 function getBullets(deal: Deal): string[] {
   const stage      = (deal.stage ?? "").replace(/-/g, " ");
   const industry   = deal.industry ?? "";
   const assetHeavy = ["Manufacturing","Logistics","Real Estate","Facility Management","Agritech","Infrastructure"].includes(industry);
 
-  if (stage === "growth") {
-    return [
-      "Figuring out what your next raise looks like, who comes in, and on what terms",
-      "Getting you in front of investors who are actually writing cheques in your sector right now",
-      "Making sure the deal structure and terms work in your favour before you sit across from anyone",
-    ];
-  }
-  if (stage === "series b") {
-    return [
-      "Walking you into your next round fully prepared, from narrative to close",
-      "Introductions to institutional funds and family offices that are active right now",
-      "Getting your cap table and terms clean before the next lead investor shows up",
-    ];
-  }
-  if (stage === "series a") {
-    return [
-      "Running your next round end to end, from first pitch to signed term sheet",
-      "Introductions to VCs, family offices, and angels who are active in your space",
-      "Building the financial model and story that gets you in the room",
-    ];
-  }
-  if (stage === "seed") {
-    if (assetHeavy) {
-      return [
-        "Structuring your raise so you are not giving away too much too early",
-        "Working capital and debt options alongside equity, so you have choices",
-        "Getting your pitch in front of the right early-stage investors",
-      ];
-    }
-    return [
-      "Structuring your raise so you are not giving away too much too early",
-      "Getting your pitch and numbers into a shape investors actually respond to",
-      "Warm introductions to angels and early-stage funds in India",
-    ];
-  }
-  if (assetHeavy) {
-    return [
-      "Getting you working capital without giving up equity",
-      "Loans against assets you already own, at terms that actually work",
-      "Funding for expansion and capex without dilution",
-    ];
-  }
+  if (stage === "growth") return [
+    "Working out the right structure for your next raise, whether that is a secondary, debt, or a new equity partner",
+    "Getting you in front of investors who are actively writing cheques in your sector",
+    "Making sure terms and structure work in your favour before any conversation starts",
+    "FDI and ECB advisory if foreign capital is on the table",
+  ];
+  if (stage === "series b") return [
+    "Preparing you fully for Series C, from narrative to data room to lead investor targeting",
+    "Introductions to institutional funds and family offices that are active right now",
+    "Cap table and terms review before the next lead investor does their diligence",
+  ];
+  if (stage === "series a") return [
+    "Running your next round end to end, from first pitch to signed term sheet",
+    "Financial model, valuation benchmarking, and pitch narrative for institutional investors",
+    "Warm introductions to VCs, family offices, and angels who are writing cheques in your space",
+  ];
+  if (stage === "seed" && assetHeavy) return [
+    "Structuring your raise so the first round does not close doors later",
+    "Working capital and debt options alongside equity, so you have real choices",
+    "Introductions to the right early-stage investors for your sector",
+  ];
+  if (stage === "seed") return [
+    "Structuring the round so you keep the right amount of your company",
+    "Getting your pitch, model, and narrative into the shape investors actually respond to",
+    "Warm introductions to angels and early-stage funds in India",
+  ];
+  if (assetHeavy) return [
+    "Unsecured working capital up to Rs 5Cr based on cashflow, no assets pledged",
+    "Secured loans up to Rs 50Cr+ against property, shares, FDs, or machinery",
+    "Project funding up to Rs 100Cr+ with milestone-based drawdowns",
+    "Export invoice factoring, up to 90% of invoice value on Day 0",
+  ];
   return [
-    "Getting your pitch and numbers into shape before you talk to anyone",
-    "Figuring out how much to raise, from whom, and on what terms",
-    "Connecting you with the right angels for your stage",
+    "Structuring the raise so you keep the right amount of your company",
+    "Getting your pitch and financials into the shape that gets you in the room",
+    "Connecting you with the right investors for your specific stage and sector",
   ];
 }
 
-// ─── Build plain-text draft (stored in DB, shown in approval email preview) ───
+// ─── Build plain-text draft (stored in DB and shown in approval email) ────────
 export function buildPersonalisedDraft(deal: Deal): string {
   const firstName = deal.founder_name.split(" ")[0];
   const n         = deal.startup_name;
   const stage     = (deal.stage ?? "").replace(/-/g, " ");
   const isGrowth  = stage === "growth" || stage === "series b" || stage === "series a";
 
-  // Opener: one line, specific to the company
+  // Opener: one specific line referencing them
   let opener: string;
   if (deal.notes && deal.notes.trim().length > 20) {
     const signal = extractSignal(deal.notes);
     opener = signal
       ? `We came across ${n}${isGrowth ? " while looking at growth-stage companies in the space" : ""}. The ${signal} caught our attention.`
-      : `We came across ${n} and wanted to reach out directly.`;
+      : `We came across ${n} and wanted to reach out.`;
   } else {
     const src: Record<string, string> = {
       "LinkedIn":      `We came across ${n} on LinkedIn.`,
       "Backrr":        `We came across ${n} on Backrr.`,
-      "Referral":      `We got a warm intro to ${n} and wanted to follow up.`,
+      "Referral":      `We got a warm introduction to ${n} and wanted to follow up.`,
       "Cold Outreach": `Thanks for reaching out. We had a closer look at ${n}.`,
       "Event":         `Good to connect recently. Had a closer look at ${n} since.`,
     };
     opener = src[deal.source ?? ""] ?? `We came across ${n} and wanted to reach out.`;
   }
 
-  const bullets = getBullets(deal).map(b => `• ${b}`).join("\n");
+  const nerveLine = getNerveLine(deal);
+  const bullets   = getBullets(deal).map(b => `• ${b}`).join("\n");
+
+  // Social proof: use real numbers from the website
+  const proof = `We are Akro Ventures. 10 years in business, Rs 200Cr+ facilitated, 50+ founders served, 95% approval rate. We work on a success fee only, nothing upfront.`;
 
   return [
     `Hi ${firstName},`,
     opener,
-    `A few things we help with at your stage:\n\n${bullets}`,
-    `We are Akro Ventures. We have helped 50+ founders raise capital in India. We work on a success fee, nothing upfront.`,
+    nerveLine,
+    `Here is specifically what we do:\n\n${bullets}`,
+    proof,
   ].join("\n\n");
 }
 
@@ -454,9 +464,22 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
 
 ${paragraphsHtml}
 
-<p>Would it make sense to connect for 15 minutes sometime this week?</p>
+<p>If any of this is relevant to where you are right now, I would love to have a quick conversation.</p>
 
-<p style="margin-top:28px;">
+<table cellpadding="0" cellspacing="0" style="margin:20px 0;">
+  <tr>
+    <td>
+      <a href="${CALENDLY_URL}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:11px 22px;border-radius:4px;letter-spacing:0.01em;">
+        Book a 15-min call with Rohit
+      </a>
+    </td>
+    <td style="padding-left:14px;font-size:13px;color:#6b7280;vertical-align:middle;">
+      or just reply to this email
+    </td>
+  </tr>
+</table>
+
+<p style="margin-top:24px;font-size:14px;">
 Rohit Jain<br>
 Co-Founder, Akro Ventures<br>
 +91 99406 28986<br>
