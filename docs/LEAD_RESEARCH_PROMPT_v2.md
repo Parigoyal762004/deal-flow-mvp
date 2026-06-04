@@ -1,168 +1,208 @@
-# Akro Ventures — Lead Research Prompt v2.1
-# Use in a new Claude chat with web search ON
+# Akro Ventures — Lead Research Prompt v3.0
+# Two-stage approach: discover first, research deep second
+# Use in Claude.ai with web search ON
 
 ---
 
-## PROMPT (paste into Claude with web search ON, replace today's date)
+## WHAT AKRO VENTURES DOES (read before searching)
+
+Akro Ventures is a capital advisory firm. We help Indian founders raise debt and equity.
+Services: unsecured loans (Rs 10L-5Cr), secured loans (Rs 25L-50Cr+), project funding
+(Rs 1Cr-100Cr+), startup fundraising (pre-seed to Series A), startup consultation, FDI/ECB
+advisory, export invoice factoring. Success fee only, nothing upfront.
+
+THE PERFECT LEAD:
+- Revenue Rs 50Cr to Rs 150Cr, not more, not less
+- Founder-led, actively running the business
+- Has NOT raised Series B or beyond
+- Has NOT filed DRHP or announced IPO plans
+- Does NOT appear frequently in Inc42, YourStory, TechCrunch India
+- Founder would actually pick up the phone because nobody is calling them yet
+- Needs capital or advisory but has no investment banker engaged
+
+NOT our target:
+- Any company with publicly quoted valuation
+- Any company with DRHP filed or IPO announced
+- Any company backed by Tiger Global, Sequoia, SoftBank at Series B+
+- Revenue above Rs 150Cr
+- Companies on Inc42 front page regularly
 
 ---
 
-You are a senior deal origination analyst at Akro Ventures, a capital advisory firm that helps Indian founders raise debt and equity. Your job is to find the RIGHT companies — not the famous ones.
+## TODAY'S DATE: {INSERT TODAY'S DATE}
 
 ---
 
-### THE BRIEF
+## STAGE 1: BUILD A LONG LIST (30 to 40 company names)
 
-We are looking for Indian companies in the Rs 50 Crore to Rs 150 Crore annual revenue range.
+Do not deep research yet. Just find candidate names. Search in this order:
 
-This is a very specific band. Not below Rs 50Cr (too early). Not above Rs 150Cr (too big, already has advisors). The sweet spot is a founder-led business that is growing, has real revenue, and has NOT yet been discovered by the mainstream advisory ecosystem.
+### 1. MSME and SME award databases
+These lists are full of exactly the companies we want. Search:
+- "MSME award winner India 2024 site:pib.gov.in"
+- "CII SME award 2024 India winner"
+- "DPIIT startup of the year 2024 winner"
+- "Economic Times emerging companies award 2024"
+- "Dun Bradstreet India top SME 2024"
+- "NASSCOM emerge50 2024 companies list"
+- "Inc42 30 under 30 founders 2024"
+- "YourStory Tech30 2024 startups"
+- "Great Indian Startup Award 2024 winner"
 
-The ideal lead:
-- Revenue between Rs 50Cr and Rs 150Cr, confirmed or strongly estimated
-- Founder is still actively running the business (not institutionalised)
-- Raised seed or Series A at most — NOT Series B, C, D, E
-- NOT heavily covered in mainstream startup media (Inc42, YourStory, Economic Times Startup)
-- Founder is findable and active on LinkedIn
-- 50 to 500 employees
-- Operating for at least 3 years
-- NOT listed on NSE or BSE mainboard (SME board is fine)
+### 2. State-level business and startup news
+National media covers big companies. State media covers the ones we want. Search:
+- "Maharashtra startup seed funded 2024 crore"
+- "Pune company raised 2024 growth"
+- "Gujarat startup revenue crore 2024"
+- "Hyderabad B2B startup seed 2024"
+- "Bengaluru SaaS startup Series A 2024 small team"
+- "Chennai manufacturing startup funded 2024"
+- "Jaipur Rajasthan company raised 2024"
+- "Ahmedabad export company revenue growth 2024"
+- "Noida startup angel round 2024"
+- "Kolkata startup funded 2023 2024"
 
-Do NOT bring these:
-- Companies that have raised Series B or beyond
-- Companies that appear frequently in Inc42, YourStory, or TechCrunch India
-- Companies with valuations publicly quoted above $100M
-- Well-known consumer brands (Rapido, Yes Madam, Snabbit, Zepto, etc.)
-- Founders who are public speakers or celebrity entrepreneurs
-- Companies where Goldman Sachs, JP Morgan, or Avendus is already engaged
+### 3. Small funding rounds only
+Only look at seed, angel, and very small Series A (under Rs 20Cr). Search:
+- "site:tracxn.com India seed 2022 2023 2024"
+- "Crunchbase India seed funding 2022 $500K $1M $2M"
+- "India angel investment 2023 undisclosed startup"
+- "India bootstrapped company profitable 50 crore 2024"
+- "India startup profitable not VC funded 2024"
 
----
+### 4. Sector-specific searches (pick 3 sectors each run, rotate weekly)
+Choose 3 from this list each time you run the prompt:
+- D2C food and cloud kitchens: "Indian D2C food brand revenue 50 crore 2024"
+- Last mile logistics: "India logistics startup Series A 2023 2024 small"
+- Healthcare clinics and diagnostics: "India healthtech startup seed 2024 clinics diagnostic"
+- Mid-market B2B SaaS: "India B2B SaaS Series A 2022 2023 ARR crore profitable"
+- Niche manufacturing: "India manufacturing startup raised 2024 crore expansion"
+- Niche edtech: "India edtech startup Series A 2023 small NOT Byju NOT Unacademy"
+- Small fintech: "India fintech seed 2024 NBFC small lending payments"
+- AgriTech: "India agritech seed 2023 2024 crore farmer"
+- HR tech and payroll: "India HR SaaS startup Series A 2023 crore"
+- Construction and proptech: "India proptech startup Series A 2023 small"
 
-### TODAY'S DATE: {INSERT TODAY'S DATE}
+### 5. LinkedIn company signals
+Search: "India company 50 to 200 employees founded 2016 2017 2018 2019 B2B"
+Look for: company pages with 50 to 300 employees, founded between 2015 and 2021, no large rounds mentioned on the page.
 
----
-
-### WHERE TO SEARCH
-
-Do NOT rely on mainstream startup news. Search here instead:
-
-1. MCA / ROC filings
-   Search: "MCA annual return India Rs 50 crore turnover" / "ROC filing revenue SME India"
-   Companies file turnover data with MCA. Look for mentions of Rs 50-150Cr revenue bands.
-
-2. Tracxn and Crunchbase, mid-tier filter
-   Search: "Tracxn India Series A 2022 2023 2024" / "Crunchbase India seed raised $2M $5M"
-   Filter to companies that raised small rounds (under $10M total) and have not raised again.
-
-3. Industry trade publications, NOT general startup news
-   - Manufacturing / chemicals: chemicaltoday.in, processindia
-   - Food / FMCG: fnbnews.in, foodbusinessnews
-   - Healthcare / clinics: expresshealthcare.in
-   - Logistics: logisticsinsider.in
-   - Agri: krishijagran.com, agrifarming.in
-   - B2B SaaS: SaaSBOOMi community, ProductNation
-
-4. LinkedIn company search
-   Search: "India company 50-200 employees founded 2016 2017 2018"
-   Look for founders with active profiles, regular posts, company page under 2000 followers.
-
-5. MSME awards and SME recognitions
-   Search: "MSME award India 2024" / "CII SME award 2024" / "Dun Bradstreet India SME 2024"
-   These lists feature exactly the profile we want.
-
-6. State-level business news
-   Search: "Gujarat company raised 2024" / "Pune manufacturing startup" / "Hyderabad B2B seed 2024"
-   State coverage finds companies that have not crossed over to national media yet.
-
-7. Small or undisclosed funding rounds
-   Search: "India angel round 2024 undisclosed" / "India seed funding 2024 $1M $2M"
-   Small rounds mean the company is still in advisory territory.
+Collect 30 to 40 names from Stage 1. Do not research them yet. Just names, rough sector, and one sentence on why they might fit.
 
 ---
 
-### QUALIFICATION (ALL must be true before including)
+## STAGE 2: QUALIFY AND DEEP RESEARCH (top 12 only)
 
-- Revenue is Rs 50Cr to Rs 150Cr, confirmed from any source
-- Founder is named and findable on LinkedIn
-- Company has NOT raised Series B or beyond
-- Company is NOT a household name or heavily VC-funded
-- Company has been operating for 3 or more years
-- NOT listed on NSE/BSE mainboard
+From Stage 1, select the 12 that look most promising.
 
-If you cannot confirm revenue is in the Rs 50-150Cr range, do not include the company.
+Remove immediately if any of these are true:
+- Revenue looks above Rs 150Cr
+- Raised Series B or beyond
+- Filed DRHP or announced IPO
+- Appeared in Inc42 as a headline more than 3 times
+- Has a publicly quoted valuation
+
+For the 12 that remain, research each one deeply:
+
+### Revenue confirmation
+Search: "[Company Name] revenue FY24 FY25 crore"
+Search: "[Company Name] annual report turnover"
+Search: "[Company Name] zauba corp" or "[Company Name] tofler"
+If revenue cannot be confirmed in the Rs 50 to 150Cr range, remove the company.
+
+### Funding history
+Search: "[Company Name] funding raised crore history"
+Must be seed, angel, or Series A only. If Series B or beyond is found, remove immediately.
+
+### Founder research
+Search: "[Company Name] founder CEO LinkedIn India"
+Note: Is the founder active on LinkedIn? Posts regularly means easier to reach.
+Note: How many connections? Under 2000 means more accessible.
+
+### Akro fit assessment
+Why would they need Akro right now?
+Are they hiring a CFO or finance head? (signal they are scaling and need advisory)
+Which Akro service fits: fundraising, loans, project funding, consultation, FDI, export factoring?
+
+### Why they are under the radar
+How often do they appear in major startup media?
+Is there a visible investment banker already engaged? If yes, skip.
+Is this a genuinely quiet company that most advisors have not called?
 
 ---
 
-### DEPTH OVER VOLUME
+## HARD RULES: ALL MUST BE TRUE BEFORE INCLUDING
 
-Target 10 to 12 companies. Not 20.
+- Revenue confirmed or estimated Rs 50Cr to Rs 150Cr, source required
+- Has NOT raised Series B or beyond
+- Has NOT filed DRHP
+- NOT heavily covered in Inc42 or YourStory as a headline
+- Founder name found and findable on LinkedIn
+- A clear specific Akro service fits their situation right now
 
-Each company should have real research depth. It is better to give 10 companies with confirmed revenue range, a real founder LinkedIn, and a specific reason Akro can help — than 20 companies with thin data.
-
-If you find only 8 good ones, give 8. Do not pad the list.
+If even one fails, remove the company. Do not pad the list.
+10 high-quality leads beats 20 borderline ones every time.
 
 ---
 
-### OUTPUT PART 1: Research Table
+## OUTPUT PART 1: Research Table
 
-For each company:
+For each company (12 maximum):
 
 | Field | Detail |
 |---|---|
 | Company Name | |
 | Sector | |
 | HQ City | |
-| Estimated Revenue | Rs 50-150Cr range, source required |
-| Revenue Source | Where this number came from |
-| Funding History | Angel / Seed / Series A only, amount and year |
-| Last Active Signal | Most recent news or activity within 12 months |
-| Why Under the Radar | One line: why this company has not been discovered yet |
+| Revenue (Rs Cr) | Confirmed or estimated, source required |
+| Revenue Source | URL or filing reference |
+| Total Funding Raised | Amount and stage, seed or angel or Series A only |
+| Why Under the Radar | One specific sentence |
+| Capital Need Signal | Job posting, expansion news, or other signal they need advisory now |
 | Founder Name | |
-| Founder LinkedIn URL | Direct URL |
-| Founder LinkedIn Activity | Active / Occasional / Inactive |
-| Estimated Email | firstname@companydomain.com, flag as estimated |
-| Company Website | |
-| Akro Fit | Hot / Warm / Cold |
-| Why Akro | One line: what specific service they need and why now |
+| Founder LinkedIn | Direct URL |
+| Founder Activity on LinkedIn | Active (posts weekly) or Occasional or Inactive |
+| Estimated Email | firstname at domain, Hunter will verify |
+| Website | |
+| Akro Fit | Hot or Warm or Cold |
+| Specific Akro Service | Which one and exactly why now |
 | Source URL | At least one link |
 
 ---
 
-### OUTPUT PART 2: CSV for Deal Flow Upload
+## OUTPUT PART 2: CSV for Deal Flow Upload
 
 After the table, output a CSV block with exactly these headers:
 
 startup_name,founder_name,founder_email,source,industry,stage,website_url,notes
 
-Mapping:
-- startup_name = Company Name
-- founder_name = Founder Name
-- founder_email = Estimated Email (team will verify on Hunter.io)
-- source = LinkedIn
-- industry = Sector
+Rules:
+- source = LinkedIn for all
 - stage = map to: pre-seed / seed / series-a / series-b / growth
-- website_url = Company Website
-- notes = Why Akro rationale, one sentence, no commas (use semicolons)
+- notes = one sentence, specific reason Akro fits right now, no commas, use semicolons instead
 
-Wrap in a code block labelled csv.
+Wrap the CSV in a code block labelled csv.
 
 ---
 
-### OUTPUT PART 3: Origination Context
+## OUTPUT PART 3: Origination Note
 
-3 to 4 sentences covering:
-- Which sectors are showing this mid-tier growth profile right now
-- Any macro reason these companies may be looking for capital advisory soon
+3 sentences covering:
+- Which sectors from today's search show the most opportunity for Akro
+- One macro reason these companies may need advisory soon (RBI policy, export incentives, credit cycle)
 - Suggested outreach angle for this specific batch
 
 ---
 
-### REMINDERS
+## FINAL REMINDER
 
-A Rs 70Cr B2B logistics company in Pune whose founder posts on LinkedIn twice a week is worth more to us than Snabbit or Rapido.
+The goal is not company names that sound impressive. The goal is founders who would
+genuinely want a 15-minute call with Rohit Jain.
 
-If a company has been in Inc42 more than twice, it is probably not for us.
+A Rs 70Cr B2B SaaS founder in Pune who raised Rs 5Cr angel two years ago and posts on
+LinkedIn twice a week is the perfect lead. Not Garuda Aerospace. Not InCred Holdings.
+Not anyone with a DRHP filed or a valuation quoted anywhere.
 
-If a company valuation has been publicly quoted, it probably has advisors already.
-
-Revenue source is mandatory. No source means no inclusion.
-
+If a company has made it into a Bain or McKinsey sector report, they already have advisors.
+If a company appears in ChrysCapital or Kedaara portfolio announcements, they do not need us.
+The ones we want are the ones nobody has found yet.
