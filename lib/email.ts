@@ -271,7 +271,9 @@ function extractSignal(notes: string): string | null {
     const m = firstClause.match(p);
     if (m) return m[0];
   }
-  return firstClause.length > 10 ? firstClause : null;
+  // Only return a signal if we found a specific number/milestone pattern.
+  // Never return raw text — it could be a full pitch deck from Backrr submissions.
+  return null;
 }
 
 // ─── Subject line — specific beats generic ───────────────────────────────────
