@@ -1,0 +1,195 @@
+import { createServerClient } from "@/lib/supabase-server";
+import { notFound } from "next/navigation";
+import type { Deal, DDChecklistItem } from "@/lib/types";
+import { DD_ITEMS } from "@/lib/dd-items";
+import { DDChecklist } from "@/components/DDChecklist";
+import { formatDate, statusColor } from "@/lib/utils";
+import { BarChart3, ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+export default async function DealDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = createServerClient();
+
+  // ── 1. Fetch the deal ───────────────────────────────────────────────
+  const { data: dealData, error } = await supabase
+    .from("deals")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !dealData) notFound();
+  const deal = dealData as Deal;
+
+  // ── 2. Fetch (and lazily seed) DD checklist rows ────────────────────
+  let { data: checklistRows } = await supabase
+    .from("dd_checklist")
+    .select("*")
+    .eq("deal_id", id)
+    .order("id");
+
+  if (!checklistRows || checklistRows.length === 0) {
+    // Seed all 26 items for legacy deals that pre-date this feature
+    const seed = DD_ITEMS.map((item) => ({
+      deal_id: id,
+      item_key: item.key,
+      item_label: item.label,
+      applicable_to: item.applicableTo,
+      status: "pending" as const,
+      notes: null,
+    }));
+
+    await supabase.from("dd_checklist").upsert(seed, {
+      onConflict: "deal_id,item_key",
+      ignoreDuplicates: true,
+    });
+
+    const { data: seeded } = await supabase
+      .from("dd_checklist")
+      .select("*")
+      .eq("deal_id", id)
+      .order("id");
+
+    checklistRows = seeded ?? seed.map((s, i) => ({ ...s, id: String(i), updated_at: new Date().toISOString() }));
+  }
+
+  const checklistItems = (checklistRows ?? []) as DDChecklistItem[];
+
+  // ── Completion % for header badge ────────────────────────────────────
+  const applicable = checklistItems.filter((i) => i.status !== "na");
+  const receivedCount = applicable.filter((i) => i.status === "received").length;
+  const ddPct = applicable.length > 0 ? Math.round((receivedCount / applicable.length) * 100) : 0;
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-10">
+
+      {/* Back */}
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Pipeline
+      </Link>
+
+      {/* Deal header */}
+      <div className="card p-6 mb-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-brand-600 flex-shrink-0" />
+              {deal.startup_name}
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              {deal.founder_name}
+              {deal.founder_email && <span className="text-slate-400"> · {deal.founder_email}</span>}
+            </p>
+          </div>
+
+          {/* Right: status badges + action */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap gap-2 items-center justify-end">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColor(deal.email_status)}`}>
+                {deal.email_status.replace("_", " ")}
+              </span>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColor(deal.approval_status)}`}>
+                {deal.approval_status}
+              </span>
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  ddPct === 100
+                    ? "bg-emerald-100 text-emerald-700"
+                    : ddPct >= 50
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                DD {ddPct}%
+              </span>
+            </div>
+            <Link
+              href={`/dashboard/${id}/mandate`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+            >
+              📄 Generate Mandate
+            </Link>
+          </div>
+        </div>
+
+        {/* Meta row */}
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-6 text-sm text-slate-500">
+          {deal.stage && (
+            <span>
+              <span className="text-xs uppercase tracking-wide text-slate-400 mr-1">Stage</span>
+              <span className="capitalize text-slate-700">{deal.stage.replace("-", " ")}</span>
+            </span>
+          )}
+          {deal.industry && (
+            <span>
+              <span className="text-xs uppercase tracking-wide text-slate-400 mr-1">Industry</span>
+              <span className="text-slate-700">{deal.industry}</span>
+            </span>
+          )}
+          <span>
+            <span className="text-xs uppercase tracking-wide text-slate-400 mr-1">Source</span>
+            <span className="text-slate-700">{deal.source}</span>
+          </span>
+          <span>
+            <span className="text-xs uppercase tracking-wide text-slate-400 mr-1">Added</span>
+            <span className="text-slate-700">{formatDate(deal.created_at)}</span>
+          </span>
+          {deal.website_url && (
+            <a
+              href={deal.website_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Website
+            </a>
+          )}
+          {deal.pitch_deck_url && (
+            <a
+              href={deal.pitch_deck_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Pitch Deck
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* AI Summary */}
+      {deal.ai_summary && (
+        <div className="card p-5 mb-6">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium mb-2">AI Summary</p>
+          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{deal.ai_summary}</p>
+        </div>
+      )}
+
+      {/* Notes */}
+      {deal.notes && (
+        <div className="card p-5 mb-6">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium mb-2">Notes</p>
+          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{deal.notes}</p>
+        </div>
+      )}
+
+      {/* DD Checklist */}
+      <div>
+        <h2 className="section-title mb-4">Document Due Diligence Checklist</h2>
+        <DDChecklist items={checklistItems} dealId={id} />
+      </div>
+    </div>
+  );
+}

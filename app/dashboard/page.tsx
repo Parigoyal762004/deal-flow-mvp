@@ -25,6 +25,26 @@ export default async function DashboardPage() {
 
   const rows = (deals ?? []) as Deal[];
 
+  // ── DD completion % per deal ─────────────────────────────────────────
+  const ddPctByDeal: Record<string, number> = {};
+  if (rows.length > 0) {
+    const { data: checklistRows } = await supabase
+      .from("dd_checklist")
+      .select("deal_id, status")
+      .in("deal_id", rows.map((d) => d.id));
+
+    if (checklistRows && checklistRows.length > 0) {
+      for (const deal of rows) {
+        const items = checklistRows.filter((r) => r.deal_id === deal.id);
+        const applicable = items.filter((r) => r.status !== "na");
+        const received = applicable.filter((r) => r.status === "received");
+        if (applicable.length > 0) {
+          ddPctByDeal[deal.id] = Math.round((received.length / applicable.length) * 100);
+        }
+      }
+    }
+  }
+
   const stats = {
     total: rows.length,
     pending: rows.filter((d) => d.email_status === "pending" || d.email_status === "awaiting_approval").length,
@@ -73,7 +93,7 @@ export default async function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {["Startup", "Founder", "Stage", "Industry", "Source", "Email Status", "Approval", "Date", "Deck"].map((h) => (
+                  {["Startup", "Founder", "Stage", "Industry", "Source", "Email Status", "Approval", "DD", "Date", "Deck"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide whitespace-nowrap">
                       {h}
                     </th>
@@ -84,7 +104,12 @@ export default async function DashboardPage() {
                 {rows.map((deal) => (
                   <tr key={deal.id} className={`transition-colors ${deal.approval_status === "rejected" ? "bg-red-50 hover:bg-red-100" : "hover:bg-slate-50"}`}>
                     <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                      {deal.startup_name}
+                      <a
+                        href={`/dashboard/${deal.id}`}
+                        className="hover:text-brand-600 transition-colors"
+                      >
+                        {deal.startup_name}
+                      </a>
                     </td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
                       <div>{deal.founder_name}</div>
@@ -104,6 +129,27 @@ export default async function DashboardPage() {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor(deal.approval_status)}`}>
                         {deal.approval_status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {ddPctByDeal[deal.id] !== undefined ? (
+                        <a href={`/dashboard/${deal.id}`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium cursor-pointer ${
+                              ddPctByDeal[deal.id] === 100
+                                ? "bg-emerald-100 text-emerald-700"
+                                : ddPctByDeal[deal.id] >= 50
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {ddPctByDeal[deal.id]}%
+                          </span>
+                        </a>
+                      ) : (
+                        <a href={`/dashboard/${deal.id}`} className="text-slate-300 text-xs hover:text-brand-500">
+                          Start →
+                        </a>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
                       {formatDate(deal.created_at)}

@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase-server";
 import { analyzePitchDeck } from "@/lib/claude";
 import { sendApprovalEmail } from "@/lib/email";
 import { v4 as uuidv4 } from "uuid";
+import { DD_ITEMS } from "@/lib/dd-items";
 
 export const maxDuration = 60; // seconds — Vercel Pro allows up to 300
 
@@ -63,8 +64,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: dbError?.message ?? "DB error" }, { status: 500 });
     }
 
-    // ── 2. Return success immediately — don't make user wait for Claude ───
-    // ── 3. Process in background (Claude + email) ─────────────────────────
+    // ── 2. Seed DD checklist rows synchronously (fast, 26 rows) ──────────
+    const checklistSeed = DD_ITEMS.map((item) => ({
+      deal_id: dealId,
+      item_key: item.key,
+      item_label: item.label,
+      applicable_to: item.applicableTo,
+      status: "pending" as const,
+      notes: null,
+    }));
+    await supabase.from("dd_checklist").insert(checklistSeed);
+
+    // ── 3. Return success immediately — don't make user wait for Claude ───
+    // ── 4. Process in background (Claude + email) ─────────────────────────
     waitUntil(processInBackground(deal));
 
     return NextResponse.json({ success: true, dealId }, { status: 201 });

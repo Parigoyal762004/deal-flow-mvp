@@ -30,6 +30,20 @@ export interface Deal {
   updated_at: string;
 }
 
+// ── DD Checklist ──────────────────────────────────────────────────────────
+export type DDStatus = "received" | "pending" | "missing" | "na";
+
+export interface DDChecklistItem {
+  id: string;
+  deal_id: string;
+  item_key: string;
+  item_label: string;
+  applicable_to: "both" | "debt" | "equity";
+  status: DDStatus;
+  notes: string | null;
+  updated_at: string;
+}
+
 export interface DealFormValues {
   startup_name: string;
   founder_name: string;

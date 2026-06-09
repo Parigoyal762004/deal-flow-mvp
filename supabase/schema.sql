@@ -147,3 +147,34 @@ create policy "Public pitch deck uploads"
 create policy "Public pitch deck reads"
   on storage.objects for select
   using (bucket_id = 'pitch-decks');
+
+-- ─────────────────────────────────────────────────────────────
+-- DD CHECKLIST
+-- ─────────────────────────────────────────────────────────────
+
+create type dd_status_enum as enum (
+  'received',
+  'pending',
+  'missing',
+  'na'
+);
+
+create table if not exists dd_checklist (
+  id            uuid primary key default uuid_generate_v4(),
+  deal_id       uuid not null references deals(id) on delete cascade,
+  item_key      text not null,
+  item_label    text not null,
+  applicable_to text not null check (applicable_to in ('both', 'debt', 'equity')),
+  status        dd_status_enum not null default 'pending',
+  notes         text,
+  updated_at    timestamptz not null default now(),
+  unique(deal_id, item_key)
+);
+
+create index if not exists dd_checklist_deal_id_idx on dd_checklist (deal_id);
+
+alter table dd_checklist enable row level security;
+
+create trigger dd_checklist_updated_at
+  before update on dd_checklist
+  for each row execute procedure set_updated_at();
