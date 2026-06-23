@@ -62,7 +62,10 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">All submitted startup opportunities</p>
         </div>
-        <a href="/" className="btn-primary text-sm">+ Submit Deal</a>
+        <div className="flex items-center gap-4">
+          <a href="/campaign" className="text-sm font-semibold text-brand-600 hover:underline">Lending Campaign &rarr;</a>
+          <a href="/" className="btn-primary text-sm">+ Submit Deal</a>
+        </div>
       </div>
 
       {/* Stats */}
