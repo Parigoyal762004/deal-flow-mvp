@@ -8,9 +8,11 @@ import nodemailer from "nodemailer";
 
 const CALENDLY_URL = "https://calendly.com/akroventures-info/30-min-stand-up-call";
 
-// Pari's sender. pari.goyal@ is a Titan mailbox (smtp.titan.email), separate
-// from info@ which is on GoDaddy. Host is configurable via env in case it moves.
-const PARI_SMTP_HOST = process.env.PARI_SMTP_HOST ?? "smtp.titan.email";
+// Pari's sender. akroventures.com is GoDaddy "Professional Email" (Titan-powered
+// webmail, but the working SMTP relay is GoDaddy's smtpout.secureserver.net —
+// smtp.titan.email does NOT authenticate; this is documented in the README).
+// Same relay info@ uses, just different mailbox credentials.
+const PARI_SMTP_HOST = process.env.PARI_SMTP_HOST ?? "smtpout.secureserver.net";
 const PARI_SMTP_PORT = Number(process.env.PARI_SMTP_PORT ?? 465);
 const PARI_SMTP_USER = process.env.PARI_SMTP_USER ?? "pari.goyal@akroventures.com";
 const PARI_SMTP_PASS = process.env.PARI_SMTP_PASS ?? "";
