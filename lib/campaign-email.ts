@@ -1,21 +1,12 @@
-import nodemailer from "nodemailer";
+import { resolveSender, transportFor, type Sender } from "./mailer";
 
 // ── Bulk lending-services campaign - templated, NOT personalised by AI ─────────
-// Sent from Pari (pari.goyal@akroventures.com) via the SAME GoDaddy SMTP as the
-// existing info@ flow, just with different credentials. No per-mail review: the
+// Sent AS whoever is signed in when they run the batch, from their own mailbox
+// and CC'd back to themselves (resolved via lib/mailer). No per-mail review: the
 // TEMPLATE is approved once, then merge-sent. Plain human language, no em dashes,
 // no unsubscribe block (per Pari's instruction).
 
 const CALENDLY_URL = "https://calendly.com/akroventures-info/30-min-stand-up-call";
-
-// Pari's sender. akroventures.com is GoDaddy "Professional Email" (Titan-powered
-// webmail, but the working SMTP relay is GoDaddy's smtpout.secureserver.net -
-// smtp.titan.email does NOT authenticate; this is documented in the README).
-// Same relay info@ uses, just different mailbox credentials.
-const PARI_SMTP_HOST = process.env.PARI_SMTP_HOST ?? "smtpout.secureserver.net";
-const PARI_SMTP_PORT = Number(process.env.PARI_SMTP_PORT ?? 465);
-const PARI_SMTP_USER = process.env.PARI_SMTP_USER ?? "pari.goyal@akroventures.com";
-const PARI_SMTP_PASS = process.env.PARI_SMTP_PASS ?? "";
 
 export interface CampaignLead {
   firstName: string;
@@ -33,15 +24,6 @@ const SERVICES: { name: string; line: string }[] = [
   { name: "Export Invoice Factoring", line: "Up to 90% of your export invoice value on Day 0, collateral-free, while your buyer pays later." },
 ];
 
-function transport() {
-  return nodemailer.createTransport({
-    host: PARI_SMTP_HOST,
-    port: PARI_SMTP_PORT,
-    secure: PARI_SMTP_PORT === 465,
-    auth: { user: PARI_SMTP_USER, pass: PARI_SMTP_PASS },
-  });
-}
-
 const greet = (fn: string) => fn.trim() || "there";
 
 export function buildCampaignSubject(lead: CampaignLead): string {
@@ -50,20 +32,20 @@ export function buildCampaignSubject(lead: CampaignLead): string {
 }
 
 // Plain-text part (every HTML email should ship a text alternative).
-export function buildCampaignText(lead: CampaignLead): string {
+export function buildCampaignText(lead: CampaignLead, sender: Sender): string {
   const services = SERVICES.map((s) => `• ${s.name}. ${s.line}`).join("\n");
   return [
     `Hi ${greet(lead.firstName)},`,
-    `I'm Pari from Akro Ventures. We help established businesses like ${lead.company} access the right capital, quickly and on terms that actually work for you.`,
+    `I'm ${sender.displayName} from Akro Ventures. We help established businesses like ${lead.company} access the right capital, quickly and on terms that actually work for you.`,
     `A few of the ways we do that:`,
     services,
     `We've facilitated Rs 200Cr+ for 50+ businesses, work on a success-fee basis with nothing upfront, and have a 95% approval rate.`,
     `If any of this is relevant to where ${lead.company} is right now, I'd love a quick conversation. You can grab a 30 minute slot here: ${CALENDLY_URL}, or just reply to this email.`,
-    `Pari Goyal\nAkro Ventures\npari.goyal@akroventures.com | akroventures.com`,
+    `${sender.fullName}\n${sender.title}\n${sender.email} | akroventures.com`,
   ].join("\n\n");
 }
 
-function buildCampaignHtml(lead: CampaignLead): string {
+function buildCampaignHtml(lead: CampaignLead, sender: Sender): string {
   const servicesHtml = SERVICES.map(
     (s) =>
       `<li style="margin-bottom:10px;"><strong style="color:#1a2e2e;">${s.name}.</strong> ${s.line}</li>`
@@ -77,7 +59,7 @@ function buildCampaignHtml(lead: CampaignLead): string {
 
   <p style="margin:0 0 14px;">Hi ${greet(lead.firstName)},</p>
 
-  <p style="margin:0 0 14px;">I'm Pari from <strong>Akro Ventures</strong>. We help established businesses like <strong>${lead.company}</strong> access the right capital, quickly and on terms that actually work for you.</p>
+  <p style="margin:0 0 14px;">I'm ${sender.displayName} from <strong>Akro Ventures</strong>. We help established businesses like <strong>${lead.company}</strong> access the right capital, quickly and on terms that actually work for you.</p>
 
   <p style="margin:0 0 8px;">A few of the ways we do that:</p>
   <ul style="margin:0 0 16px;padding-left:20px;color:#374151;">
@@ -100,9 +82,9 @@ function buildCampaignHtml(lead: CampaignLead): string {
   </table>
 
   <p style="margin:0;font-size:14px;">
-    Pari Goyal<br>
-    Akro Ventures<br>
-    <a href="mailto:pari.goyal@akroventures.com" style="color:#1a1a1a;text-decoration:none;">pari.goyal@akroventures.com</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
+    ${sender.fullName}<br>
+    ${sender.title}<br>
+    <a href="mailto:${sender.email}" style="color:#1a1a1a;text-decoration:none;">${sender.email}</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
   </p>
 
 </div>
@@ -110,13 +92,15 @@ function buildCampaignHtml(lead: CampaignLead): string {
 </html>`;
 }
 
-export async function sendCampaignEmail(lead: CampaignLead): Promise<string> {
-  const info = await transport().sendMail({
-    from: `"Pari Goyal · Akro Ventures" <${PARI_SMTP_USER}>`,
+export async function sendCampaignEmail(lead: CampaignLead, senderUsername: string | null): Promise<string> {
+  const sender = resolveSender(senderUsername);
+  const info = await transportFor(sender).sendMail({
+    from: `"${sender.fullName} · Akro Ventures" <${sender.email}>`,
     to: lead.email,
+    cc: sender.email, // CC the operator themselves (sent via their own SMTP)
     subject: buildCampaignSubject(lead),
-    text: buildCampaignText(lead),
-    html: buildCampaignHtml(lead),
+    text: buildCampaignText(lead, sender),
+    html: buildCampaignHtml(lead, sender),
   });
   return info.messageId;
 }

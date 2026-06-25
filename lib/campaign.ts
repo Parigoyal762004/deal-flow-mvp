@@ -50,7 +50,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export interface BatchResult { attempted: number; sent: number; skipped: number; failed: number; }
 
 // Send the next N `new` leads. No per-mail review. Verifies, throttles, records.
-export async function sendNextBatch(count = DAILY_BATCH): Promise<BatchResult> {
+// `senderUsername` = the signed-in operator; emails go from their mailbox.
+export async function sendNextBatch(count = DAILY_BATCH, senderUsername: string | null = null): Promise<BatchResult> {
   const supa = createServerClient();
   const { data: leads, error } = await supa
     .from("leads")
@@ -72,7 +73,7 @@ export async function sendNextBatch(count = DAILY_BATCH): Promise<BatchResult> {
     // 2. send
     try {
       const cl: CampaignLead = { firstName: lead.first_name ?? "", company: lead.company, email: lead.email };
-      const messageId = await sendCampaignEmail(cl);
+      const messageId = await sendCampaignEmail(cl, senderUsername);
       await supa.from("leads").update({ status: "sent", sent_at: new Date().toISOString(), message_id: messageId, error: null }).eq("id", lead.id);
       res.sent++;
     } catch (e) {
@@ -85,7 +86,7 @@ export async function sendNextBatch(count = DAILY_BATCH): Promise<BatchResult> {
   return res;
 }
 
-// Send the exact template to one address (Pari's own) so she sees what goes out.
-export async function sendTestTo(email: string): Promise<string> {
-  return sendCampaignEmail({ firstName: "Pari", company: "Acme Exports (sample)", email });
+// Send the exact template to one address so the operator sees what goes out.
+export async function sendTestTo(email: string, senderUsername: string | null = null): Promise<string> {
+  return sendCampaignEmail({ firstName: "there", company: "Acme Exports (sample)", email }, senderUsername);
 }

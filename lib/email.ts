@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import type { Deal } from "./types";
 import { escapeHtml as e } from "./security";
+import { resolveSender, transportFor } from "./mailer";
+import { STARTUP_SERVICES } from "./akro-services";
 
 const APP_URL      = process.env.NEXT_PUBLIC_APP_URL ?? "https://deal-flow-mvp.vercel.app";
 const SMTP_USER    = process.env.SMTP_USER ?? "info@akroventures.com";
@@ -387,43 +389,6 @@ export function buildPersonalisedDraft(deal: Deal): string {
   ].join("\n\n");
 }
 
-// ─── Service pills - 2-3 contextual services shown after signature ────────────
-function getServicePills(deal: Deal): { label: string; url: string }[] {
-  const stage = (deal.stage ?? "").replace(/-/g, " ");
-  const industry = deal.industry ?? "";
-
-  // Growth / pre-IPO stage
-  if (stage === "growth" || stage === "series b") {
-    return [
-      { label: "Capital Structuring",     url: "https://akroventures.com/services" },
-      { label: "Investor Introductions",  url: "https://akroventures.com/services" },
-      { label: "Pre-IPO Advisory",        url: "https://akroventures.com/services" },
-    ];
-  }
-  // Series A
-  if (stage === "series a") {
-    return [
-      { label: "Startup Fundraising",     url: "https://akroventures.com/services" },
-      { label: "Capital Structuring",     url: "https://akroventures.com/services" },
-      { label: "Investor Introductions",  url: "https://akroventures.com/services" },
-    ];
-  }
-  // Debt-likely industries
-  if (["Manufacturing", "Logistics", "Real Estate", "Facility Management", "Agritech"].includes(industry)) {
-    return [
-      { label: "Startup Fundraising",     url: "https://akroventures.com/services" },
-      { label: "Secured Loans",           url: "https://akroventures.com/services" },
-      { label: "Project Funding",         url: "https://akroventures.com/services" },
-    ];
-  }
-  // Early stage default
-  return [
-    { label: "Startup Fundraising",       url: "https://akroventures.com/services" },
-    { label: "Startup Consultation",      url: "https://akroventures.com/services" },
-    { label: "Investor Introductions",    url: "https://akroventures.com/services" },
-  ];
-}
-
 // EXTERNAL - Founder email. Personal plain-text body + minimal service context footer.
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendFounderEmail(deal: Deal): Promise<void> {
@@ -450,11 +415,16 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
     })
     .join("\n");
 
-  // Service pills - subtle, skimmable, contextually selected
-  const pills = getServicePills(deal);
-  const pillsHtml = pills
-    .map(p => `<a href="${p.url}" style="display:inline-block;margin:0 6px 6px 0;padding:5px 12px;border:1px solid #d1d5db;border-radius:3px;font-size:12px;color:#374151;text-decoration:none;">${p.label}</a>`)
-    .join("");
+  // Resolve who this sends AS: the deal's owner, from their own mailbox, CC'd
+  // back to themselves. Falls back to info@ if their mailbox isn't configured.
+  const sender = resolveSender(deal.owner);
+
+  // Akro's services for startups - plainly "here's what we do", same idea as the
+  // bulk campaign. Renders however many services are configured in akro-services.
+  const servicesHtml = STARTUP_SERVICES
+    .map(s => `<li style="margin-bottom:10px;"><strong style="color:#1a2e2e;">${s.name}.</strong> ${s.line}</li>`)
+    .join("\n");
+  const phoneLine = sender.phone ? `${sender.phone}<br>` : "";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -473,7 +443,7 @@ ${paragraphsHtml}
   <tr>
     <td>
       <a href="${CALENDLY_URL}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:11px 22px;border-radius:4px;letter-spacing:0.01em;">
-        Book a 15-min call with Rohit
+        Book a 15-min call with ${sender.displayName}
       </a>
     </td>
     <td style="padding-left:14px;font-size:13px;color:#6b7280;vertical-align:middle;">
@@ -483,28 +453,29 @@ ${paragraphsHtml}
 </table>
 
 <p style="margin-top:24px;font-size:14px;">
-Rohit Jain<br>
-Co-Founder, Akro Ventures<br>
-+91 99406 28986<br>
-<a href="mailto:rohit.jain@akroventures.com" style="color:#1a1a1a;text-decoration:none;">rohit.jain@akroventures.com</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
+${e(sender.fullName)}<br>
+${e(sender.title)}<br>
+${phoneLine}
+<a href="mailto:${sender.email}" style="color:#1a1a1a;text-decoration:none;">${sender.email}</a> &nbsp;|&nbsp; <a href="https://akroventures.com" style="color:#1a1a1a;text-decoration:none;">akroventures.com</a>
 </p>
 
 <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;">
-  <p style="margin:0 0 10px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">What we help with</p>
-  ${pillsHtml}
+  <p style="margin:0 0 12px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">What we do at Akro</p>
+  <ul style="margin:0;padding-left:20px;color:#374151;font-size:13px;line-height:1.6;">
+    ${servicesHtml}
+  </ul>
 </div>
 
 </div>
 </body>
 </html>`;
 
-  const transporter = createTransport();
-  const info = await transporter.sendMail({
-    from: `"Rohit from Akro Ventures" <${SMTP_USER}>`,
+  const info = await transportFor(sender).sendMail({
+    from: `"${sender.displayName} from Akro Ventures" <${sender.email}>`,
     to: deal.founder_email,
-    cc: "info@akroventures.com",
+    cc: sender.email, // CC the sender themselves (they sent it via their own SMTP)
     subject: buildSubject(deal),
     html,
   });
-  console.log("[email] Founder email sent:", info.messageId);
+  console.log(`[email] Founder email sent as ${sender.email} (fallback=${sender.isFallback}):`, info.messageId);
 }
