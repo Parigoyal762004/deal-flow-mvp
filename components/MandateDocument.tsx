@@ -99,7 +99,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
         <tbody>
           <Row label="Firm Name"       value="Akro Ventures Private Limited" />
           <Row label="Type"            value="Financial Capital Advisory & Startup Consultancy" />
-          <Row label="Registered Office" value="Innov8, 2nd Floor, AH45, Krishna Reddy Industrial Area, Dooravani Nagar, Bangalore, Karnataka – 560016" />
+          <Row label="Registered Office" value="Innov8, 2nd Floor, AH45, Krishna Reddy Industrial Area, Dooravani Nagar, Bangalore, Karnataka - 560016" />
           <Row label="Represented by"  value="Rohit Jain, Co-Founder" />
         </tbody>
       </table>
@@ -160,7 +160,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
       <p style={{ ...BODY, marginBottom: 6 }}>The Client agrees to:</p>
       {[
         "Provide accurate, complete, and updated information, documentation, financials, and disclosures as reasonably requested by Akro Ventures;",
-        `Maintain exclusivity with Akro Ventures during the Mandate Period – no parallel engagement of another advisor, placement agent, or broker for the same mandate;`,
+        `Maintain exclusivity with Akro Ventures during the Mandate Period - no parallel engagement of another advisor, placement agent, or broker for the same mandate;`,
         `Promptly review and respond to queries from investor${isDebt ? "s or lenders" : "s"} routed through Akro Ventures;`,
         "Pay the Retainer Fee and applicable Success Fees as stipulated in Section 5;",
         `Not directly negotiate or close transactions with any investor${isDebt ? " or lender" : ""} introduced by Akro Ventures in circumvention of this Agreement.`,
@@ -176,7 +176,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
       <table style={tableF}>
         <tbody>
           <Row label="Retainer Amount"  value={<><strong>{formatINR(retainerAmount)}</strong> ({inWords(retainerAmount)})</>} />
-          <Row label="Payment Terms"    value="100% upfront — payable on the same day as execution of this Agreement" />
+          <Row label="Payment Terms"    value="100% upfront - payable on the same day as execution of this Agreement" />
           <Row label="Nature"           value="Conditionally refundable as per Refund Conditions; otherwise non-refundable" />
           <Row label="Purpose"          value="Covers advisory, research, outreach, documentation, and deal structuring services" />
         </tbody>
@@ -188,7 +188,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
       {/* 5.2 Equity Success Fee */}
       {isEquity && (
         <>
-          <p style={{ ...H2, marginTop: 14 }}>5.2 Success Fee – Equity Raise</p>
+          <p style={{ ...H2, marginTop: 14 }}>5.2 Success Fee - Equity Raise</p>
           <table style={tableF}>
             <tbody>
               <Row label="Success Fee Rate"   value={<><strong>{successFeeEquityPct}% ({numToWords(successFeeEquityPct)} Percent)</strong> of equity capital successfully raised</>} />
@@ -198,7 +198,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
             </tbody>
           </table>
           <p style={{ ...BODY, marginTop: 4, fontStyle: "italic" }}>
-            Example: If ₹10 Crore equity is raised — Success Fee payable = {formatINR(exFeeEquity)} ({inWords(exFeeEquity)}).
+            Example: If ₹10 Crore equity is raised - Success Fee payable = {formatINR(exFeeEquity)} ({inWords(exFeeEquity)}).
           </p>
         </>
       )}
@@ -206,7 +206,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
       {/* 5.3 Debt Success Fee */}
       {isDebt && (
         <>
-          <p style={{ ...H2, marginTop: 14 }}>{isEquity ? "5.3" : "5.2"} Success Fee – Debt Raise</p>
+          <p style={{ ...H2, marginTop: 14 }}>{isEquity ? "5.3" : "5.2"} Success Fee - Debt Raise</p>
           <table style={tableF}>
             <tbody>
               <Row label="Success Fee Rate"   value={<><strong>{successFeeDebtPct}% ({numToWords(successFeeDebtPct)} Percent)</strong> of debt / loan amount sanctioned and disbursed</>} />
@@ -216,7 +216,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
             </tbody>
           </table>
           <p style={{ ...BODY, marginTop: 4, fontStyle: "italic" }}>
-            Example: If ₹10 Crore debt is raised — Success Fee payable = {formatINR(exFeeDebt)} ({inWords(exFeeDebt)}).
+            Example: If ₹10 Crore debt is raised - Success Fee payable = {formatINR(exFeeDebt)} ({inWords(exFeeDebt)}).
           </p>
         </>
       )}
@@ -244,7 +244,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
         <strong>6.1</strong> The Client grants Akro Ventures exclusive rights to raise {mandateType === "equity_debt" ? "both equity and debt capital" : mandateType === "equity" ? "equity capital" : "debt capital"} for the mandate described herein during the Mandate Period. The Client shall not engage, solicit, or enter into discussions with any other fundraising advisor, placement agent, or {isDebt ? "lending broker" : "broker"} for the same mandate during this period.
       </p>
       <p style={{ ...BODY, marginBottom: 6 }}>
-        <strong>6.2</strong> The Client shall not approach, negotiate with, or close any transaction with any investor{isDebt ? " or lender" : ""} introduced by Akro Ventures — whether directly or indirectly — without the involvement of Akro Ventures and without payment of the applicable Success Fee.
+        <strong>6.2</strong> The Client shall not approach, negotiate with, or close any transaction with any investor{isDebt ? " or lender" : ""} introduced by Akro Ventures - whether directly or indirectly - without the involvement of Akro Ventures and without payment of the applicable Success Fee.
       </p>
       <p style={{ ...BODY }}>
         <strong>6.3</strong> Breach of exclusivity or anti-circumvention obligations shall entitle Akro Ventures to Liquidated Damages equal to 5% (Five Percent) of the capital raised or ₹25,00,000 (Twenty-Five Lakhs), whichever is higher, without prejudice to any other remedies available at law or equity.
@@ -391,7 +391,7 @@ export function MandateDocument({ params }: { params: MandateParams }) {
           </tbody>
         </table>
         <p style={{ ...BODY, textAlign: "center", marginTop: 20, fontStyle: "italic", color: "#555" }}>
-          — End of Agreement —
+          - End of Agreement -
         </p>
       </div>
     </div>

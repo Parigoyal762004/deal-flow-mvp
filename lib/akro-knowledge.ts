@@ -1,17 +1,17 @@
 /**
- * Akro Ventures — Knowledge Base
+ * Akro Ventures - Knowledge Base
  * Ground truth for all AI-generated content and email drafts.
  * Update this file as the company evolves.
  */
 
 export const AKRO_KNOWLEDGE_BASE = `
 ====================================================
-AKRO VENTURES — WHO WE ARE
+AKRO VENTURES - WHO WE ARE
 ====================================================
 
 CRITICAL: Akro Ventures is NOT a venture capital fund. We do NOT invest our own money.
 We are a CAPITAL ADVISORY firm. We help founders and businesses GET FUNDED by connecting
-them with the right investors, lenders, and capital sources — and guiding them through the
+them with the right investors, lenders, and capital sources - and guiding them through the
 entire process from strategy to close.
 
 Name:       Akro Ventures
@@ -27,12 +27,12 @@ Vision:     "An India where capital follows competence, not collateral."
 ----------------------------------------------------
 FOUNDERS
 ----------------------------------------------------
-Rohit Jain — Co-Founder
+Rohit Jain - Co-Founder
   - Expertise: business lending, structured finance, investment advisory
   - 10+ years navigating India's financial landscape
   - Contact: rohit.jain@akroventures.com | +91 99406 28986
 
-Akshita Chahande — Co-Founder
+Akshita Chahande - Co-Founder
   - Expertise: startup fundraising, growth strategy, early-stage financial consulting
   - Brings a founder's perspective to every engagement
   - Focus: pre-seed through growth stage
@@ -45,8 +45,8 @@ TRACK RECORD (real numbers from website)
 - 95% client approval rate
 - 40+ lender and investor relationships
 - 10+ years of combined experience
-- Zero upfront fees — success fee only, payable only when capital is disbursed or a deal closes
-- 100% confidential — signed NDAs, data never shared without written consent
+- Zero upfront fees - success fee only, payable only when capital is disbursed or a deal closes
+- 100% confidential - signed NDAs, data never shared without written consent
 - RBI Advisory Compliant
 
 ----------------------------------------------------
@@ -116,15 +116,15 @@ SERVICES (8 offerings)
 ----------------------------------------------------
 THE AKRO METHOD (4 steps)
 ----------------------------------------------------
-01. Discovery Call      — 15 minutes. We listen, you talk.
-02. Financial Blueprint — Cashflow and capital structure modelled.
-03. Lender Matchmaking  — Curated outreach to the right desks.
-04. Capital Secured     — Term sheet, negotiation, disbursal.
+01. Discovery Call      - 15 minutes. We listen, you talk.
+02. Financial Blueprint - Cashflow and capital structure modelled.
+03. Lender Matchmaking  - Curated outreach to the right desks.
+04. Capital Secured     - Term sheet, negotiation, disbursal.
 
 ----------------------------------------------------
 PRICING / COMMERCIAL MODEL
 ----------------------------------------------------
-Zero upfront. We work on a success fee only — payable when capital is disbursed or a deal closes.
+Zero upfront. We work on a success fee only - payable when capital is disbursed or a deal closes.
 The exact percentage is shared transparently in writing before engagement begins.
 This means: Akro only gets paid when the client gets funded. Full alignment of incentives.
 
@@ -135,10 +135,10 @@ WRITING GUIDELINES FOR ALL FOUNDER COMMUNICATION
    CORRECT: "we help you raise", "we connect you with investors", "we guide your fundraise"
    WRONG:   "we want to invest", "we will fund you", "we're excited to back you"
 
-2. Never use em dashes (—) anywhere. Not in subject, body, or signature.
+2. Never use em dashes (-) anywhere. Not in subject, body, or signature.
 
 3. Subject line format: "FirstName, a question about CompanyName" or "A question about CompanyName"
-   Never use fake "Re:" — it is a spam trigger.
+   Never use fake "Re:" - it is a spam trigger.
 
 4. Tone: Direct, warm, honest. Like a smart person typing, not a marketing template.
 

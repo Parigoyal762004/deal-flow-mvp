@@ -23,12 +23,12 @@ function buildMetaSummary(deal: Deal): string {
 
 // ─── Main analysis function ───────────────────────────────────────────────────
 export async function analyzePitchDeck(deal: Deal): Promise<ClaudeAnalysis> {
-  // Founder email is ALWAYS template-based — fast, reliable, no AI dependency
+  // Founder email is ALWAYS template-based - fast, reliable, no AI dependency
   const draftEmail = buildPersonalisedDraft(deal);
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.warn("[groq] GROQ_API_KEY not set — using metadata summary.");
+    console.warn("[groq] GROQ_API_KEY not set - using metadata summary.");
     return { summary: buildMetaSummary(deal), draftEmail };
   }
 
@@ -51,10 +51,10 @@ export async function analyzePitchDeck(deal: Deal): Promise<ClaudeAnalysis> {
       }
     }
 
-    // 2. Build prompt — summary only, no draft email needed
+    // 2. Build prompt - summary only, no draft email needed
     const pitchDeckSection = pdfText.length > 100
       ? `\n\n--- PITCH DECK CONTENT ---\n${pdfText.slice(0, 8000)}\n--- END PITCH DECK ---`
-      : "\n\n(No pitch deck provided — use the metadata and notes below.)";
+      : "\n\n(No pitch deck provided - use the metadata and notes below.)";
 
     const prompt = `${AKRO_KNOWLEDGE_BASE}
 
@@ -73,7 +73,7 @@ Source: ${deal.source}
 Website: ${deal.website_url ?? "N/A"}
 Internal notes: ${deal.notes ?? "None"}${pitchDeckSection}
 
-Respond with ONLY valid JSON — no markdown, no code fences, no extra text:
+Respond with ONLY valid JSON - no markdown, no code fences, no extra text:
 {
   "summary": "3-4 sentences: what the startup does, traction/stage, market opportunity. Be factual and specific.",
   "strengths": ["strength 1", "strength 2", "strength 3"],
@@ -91,7 +91,7 @@ Respond with ONLY valid JSON — no markdown, no code fences, no extra text:
     const raw = completion.choices[0]?.message?.content ?? "";
     console.log("[groq] Raw response length:", raw.length, "| preview:", raw.slice(0, 120));
 
-    // Robust JSON extraction — find outermost { ... }
+    // Robust JSON extraction - find outermost { ... }
     const firstBrace = raw.indexOf("{");
     const lastBrace = raw.lastIndexOf("}");
     if (firstBrace === -1 || lastBrace === -1) {

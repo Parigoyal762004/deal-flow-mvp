@@ -92,7 +92,7 @@ export default function EditEmailClient({
           <div className="bg-slate-50 border-b border-slate-200 px-5 py-3">
             <div className="text-xs text-slate-500 space-y-1">
               <div><span className="font-medium text-slate-700 w-10 inline-block">To:</span> {founderName} &lt;{founderEmail}&gt;</div>
-              <div><span className="font-medium text-slate-700 w-10 inline-block">Re:</span> Akro Ventures — {startupName}</div>
+              <div><span className="font-medium text-slate-700 w-10 inline-block">Re:</span> Akro Ventures - {startupName}</div>
               <div><span className="font-medium text-slate-700 w-10 inline-block">From:</span> Rohit &amp; Akshita · info@akroventures.com</div>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function EditEmailClient({
           <div className="mx-5 mb-5 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
             <p className="text-xs text-amber-700 leading-relaxed">
               <strong>Tip:</strong> Keep it to 2 short paragraphs. Start with{" "}
-              <code className="bg-amber-100 px-1 rounded">Hi {firstName},</code> — the Calendly
+              <code className="bg-amber-100 px-1 rounded">Hi {firstName},</code> - the Calendly
               button and your signature are appended automatically below.
             </p>
           </div>

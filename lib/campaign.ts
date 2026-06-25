@@ -26,7 +26,7 @@ export async function getCampaignStats(): Promise<CampaignStats> {
   return out;
 }
 
-// ── MX check — drop dead domains before sending (bounces poison reputation) ────
+// ── MX check - drop dead domains before sending (bounces poison reputation) ────
 const mxCache = new Map<string, boolean>();
 async function domainHasMx(email: string): Promise<boolean> {
   const domain = email.split("@")[1]?.toLowerCase();
@@ -41,7 +41,7 @@ async function domainHasMx(email: string): Promise<boolean> {
   } catch (err) {
     const code = (err as { code?: string })?.code;
     if (code === "ENOTFOUND" || code === "ENODATA") { mxCache.set(domain, false); return false; }
-    return true; // DNS itself flaky — don't punish the lead, let the send try
+    return true; // DNS itself flaky - don't punish the lead, let the send try
   }
 }
 
@@ -79,7 +79,7 @@ export async function sendNextBatch(count = DAILY_BATCH): Promise<BatchResult> {
       await supa.from("leads").update({ status: "bounced", error: (e as Error).message?.slice(0, 300) }).eq("id", lead.id);
       res.failed++;
     }
-    // 3. throttle — spread the batch, jittered, so it's not a burst
+    // 3. throttle - spread the batch, jittered, so it's not a burst
     await sleep(1200 + Math.random() * 1500);
   }
   return res;

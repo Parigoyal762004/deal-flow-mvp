@@ -39,7 +39,7 @@ export default function CampaignClient({ stats: initial, batchSize }: { stats: S
     setTestMsg("");
     startTest(async () => {
       const r = await runTestAction(testEmail);
-      setTestMsg(r.ok ? `Test sent to ${testEmail} — check the inbox.` : `Error: ${r.error}`);
+      setTestMsg(r.ok ? `Test sent to ${testEmail} - check the inbox.` : `Error: ${r.error}`);
     });
   }
 

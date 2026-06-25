@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Deal } from "./types";
+import { escapeHtml as e } from "./security";
 
 const APP_URL      = process.env.NEXT_PUBLIC_APP_URL ?? "https://deal-flow-mvp.vercel.app";
 const SMTP_USER    = process.env.SMTP_USER ?? "info@akroventures.com";
@@ -63,18 +64,18 @@ ${bodyHtml}
 </html>`;
 }
 
-// ── Circular icon — for dark/teal backgrounds (header & footer) ───────────────
+// ── Circular icon - for dark/teal backgrounds (header & footer) ───────────────
 function iconHtml(size = 44): string {
   return `<img src="${ICON_URL}" alt="Akro Ventures" width="${size}" height="${size}" style="width:${size}px;height:${size}px;display:block;border-radius:50%;"/>`;
 }
 
-// ── Full wordmark — white background baked in, no wrapper needed ──────────────
+// ── Full wordmark - white background baked in, no wrapper needed ──────────────
 function logoHtml(height = 40): string {
   return `<img src="${LOGO_URL}" alt="Akro Ventures" height="${height}" style="height:${height}px;width:auto;display:block;border-radius:4px;"/>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INTERNAL — Team approval email
+// INTERNAL - Team approval email
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendApprovalEmail(deal: Deal): Promise<void> {
   const recipients = (process.env.APPROVAL_EMAIL_RECIPIENTS ?? SMTP_USER)
@@ -133,7 +134,7 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
         </tr>
       </table>
       <div style="margin:16px 0 14px;height:1px;background:linear-gradient(90deg,rgba(212,175,53,0.7) 0%,transparent 70%);"></div>
-      <p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">New Deal: ${deal.startup_name}</p>
+      <p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.01em;">New Deal: ${e(deal.startup_name)}</p>
       <p style="margin:5px 0 0;font-size:12px;color:rgba(255,255,255,0.6);">${stageBadge}${industry ? "&nbsp;&middot;&nbsp;" + industry : ""}&nbsp;&middot;&nbsp;via ${deal.source}</p>
     </td>
   </tr>
@@ -145,8 +146,8 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
         <tr>
           <td class="col50" width="50%" style="vertical-align:top;padding-bottom:18px;">
             <p style="margin:0 0 5px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${GOLD};">Founder</p>
-            <p style="margin:0;font-size:15px;font-weight:600;color:${TEXT_DARK};">${deal.founder_name}</p>
-            <p style="margin:2px 0 0;font-size:12px;color:${TEXT_MID};">${deal.founder_email}</p>
+            <p style="margin:0;font-size:15px;font-weight:600;color:${TEXT_DARK};">${e(deal.founder_name)}</p>
+            <p style="margin:2px 0 0;font-size:12px;color:${TEXT_MID};">${e(deal.founder_email)}</p>
           </td>
           <td class="col50" width="50%" style="vertical-align:top;padding-bottom:18px;">
             <p style="margin:0 0 5px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${GOLD};">Links</p>
@@ -179,7 +180,7 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
       <p style="margin:0 0 10px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${GOLD};">Draft Response to Founder</p>
       <div style="border:1px solid ${BORDER};border-radius:6px;overflow:hidden;">
         <div style="background:#f0f4f4;padding:9px 16px;border-bottom:1px solid ${BORDER};">
-          <p style="margin:0;font-size:11px;color:${TEXT_MID};">To: <strong>${deal.founder_email}</strong>&nbsp;&nbsp;&middot;&nbsp;&nbsp;Subject: Akro Ventures / Re: ${deal.startup_name}</p>
+          <p style="margin:0;font-size:11px;color:${TEXT_MID};">To: <strong>${e(deal.founder_email)}</strong>&nbsp;&nbsp;&middot;&nbsp;&nbsp;Subject: Akro Ventures / Re: ${e(deal.startup_name)}</p>
         </div>
         <div style="padding:16px 18px 12px;background:#ffffff;">
           <p style="margin:0 0 12px;font-size:13px;color:${TEXT_DARK};line-height:1.85;">${draftHtml}</p>
@@ -249,7 +250,7 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PERSONALISATION HELPERS — no LLM, uses form data
+// PERSONALISATION HELPERS - no LLM, uses form data
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Extract the most specific data point from pipeline notes ────────────────
@@ -272,11 +273,11 @@ function extractSignal(notes: string): string | null {
     if (m) return m[0];
   }
   // Only return a signal if we found a specific number/milestone pattern.
-  // Never return raw text — it could be a full pitch deck from Backrr submissions.
+  // Never return raw text - it could be a full pitch deck from Backrr submissions.
   return null;
 }
 
-// ─── Subject line — specific beats generic ───────────────────────────────────
+// ─── Subject line - specific beats generic ───────────────────────────────────
 export function buildSubject(deal: Deal): string {
   const firstName = deal.founder_name.split(" ")[0];
   const stage = (deal.stage ?? "").replace(/-/g, " ");
@@ -286,7 +287,7 @@ export function buildSubject(deal: Deal): string {
   return `${firstName}, a question about ${deal.startup_name}`;
 }
 
-// ─── The nerve — one sentence that hits what's actually on their mind ─────────
+// ─── The nerve - one sentence that hits what's actually on their mind ─────────
 function getNerveLine(deal: Deal): string {
   const stage      = (deal.stage ?? "").replace(/-/g, " ");
   const industry   = deal.industry ?? "";
@@ -301,7 +302,7 @@ function getNerveLine(deal: Deal): string {
   return `Most founders we speak to at your stage are figuring out the same thing: how to raise without giving away too much, and how to find the right people to talk to.`;
 }
 
-// ─── Bullets — what Akro specifically does, plain and human ──────────────────
+// ─── Bullets - what Akro specifically does, plain and human ──────────────────
 function getBullets(deal: Deal): string[] {
   const stage      = (deal.stage ?? "").replace(/-/g, " ");
   const industry   = deal.industry ?? "";
@@ -386,7 +387,7 @@ export function buildPersonalisedDraft(deal: Deal): string {
   ].join("\n\n");
 }
 
-// ─── Service pills — 2-3 contextual services shown after signature ────────────
+// ─── Service pills - 2-3 contextual services shown after signature ────────────
 function getServicePills(deal: Deal): { label: string; url: string }[] {
   const stage = (deal.stage ?? "").replace(/-/g, " ");
   const industry = deal.industry ?? "";
@@ -423,15 +424,15 @@ function getServicePills(deal: Deal): { label: string; url: string }[] {
   ];
 }
 
-// EXTERNAL — Founder email. Personal plain-text body + minimal service context footer.
+// EXTERNAL - Founder email. Personal plain-text body + minimal service context footer.
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendFounderEmail(deal: Deal): Promise<void> {
   const firstName = deal.founder_name.split(" ")[0];
 
-  // Use exactly what the team approved — never regenerate content
+  // Use exactly what the team approved - never regenerate content
   const draftText = deal.draft_email ?? buildPersonalisedDraft(deal);
 
-  // Convert plain text to HTML — bullet lines (• ...) become <li>, rest become <p>
+  // Convert plain text to HTML - bullet lines (• ...) become <li>, rest become <p>
   const paragraphsHtml = draftText
     .split(/\n\n+/)
     .filter(Boolean)
@@ -449,7 +450,7 @@ export async function sendFounderEmail(deal: Deal): Promise<void> {
     })
     .join("\n");
 
-  // Service pills — subtle, skimmable, contextually selected
+  // Service pills - subtle, skimmable, contextually selected
   const pills = getServicePills(deal);
   const pillsHtml = pills
     .map(p => `<a href="${p.url}" style="display:inline-block;margin:0 6px 6px 0;padding:5px 12px;border:1px solid #d1d5db;border-radius:3px;font-size:12px;color:#374151;text-decoration:none;">${p.label}</a>`)

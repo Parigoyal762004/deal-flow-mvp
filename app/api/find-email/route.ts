@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
+import { rateLimit } from "@/lib/security";
 
 // POST /api/find-email
 // Body: { firstName, lastName, domain }
 //
-// Smart two-step Hunter flow — avoids unnecessary API calls:
+// Smart two-step Hunter flow - avoids unnecessary API calls:
 // - Finder confidence >= 85  → trust it, skip Verifier (save 1 credit)
 // - Finder confidence 30-84  → run Verifier to confirm
 // - Finder confidence < 30   → skip Verifier, flag as unverified (low confidence anyway)
@@ -39,6 +41,17 @@ async function verifyEmail(apiKey: string, email: string) {
 }
 
 export async function POST(req: NextRequest) {
+  // Auth required: this spends paid Hunter.io credits. Only the logged-in team
+  // (CSV bulk tool) may call it — never anonymous visitors.
+  const user = await getSessionUser(req.cookies.get(SESSION_COOKIE)?.value);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Generous per-user cap so the sequential CSV lookups work, but bounded.
+  if (!rateLimit(`find-email:${user}`, 120, 60 * 1000)) {
+    return NextResponse.json({ error: "Too many lookups. Please slow down." }, { status: 429 });
+  }
+
   const { firstName, lastName, domain } = await req.json();
 
   if (!firstName || !domain) {
@@ -65,21 +78,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2: Decide whether to verify based on confidence score
-    // High confidence (>=85): trust Hunter, skip Verifier — saves 1 credit
+    // High confidence (>=85): trust Hunter, skip Verifier - saves 1 credit
     if (score >= 85) {
-      console.log(`[find-email] ${email} — score: ${score} (high confidence, skipping verifier)`);
+      console.log(`[find-email] ${email} - score: ${score} (high confidence, skipping verifier)`);
       return NextResponse.json({ found: true, verified: true, email, score, verifierUsed: false });
     }
 
     // Very low confidence (<30): not worth verifying, flag for manual check
     if (score < 30) {
-      console.log(`[find-email] ${email} — score: ${score} (too low, skipping verifier)`);
+      console.log(`[find-email] ${email} - score: ${score} (too low, skipping verifier)`);
       return NextResponse.json({ found: true, verified: false, email, score, verifierUsed: false });
     }
 
     // Medium confidence (30-84): run Verifier to be sure
     const { verified, status, result } = await verifyEmail(apiKey, email);
-    console.log(`[find-email] ${email} — score: ${score}, status: ${status}, result: ${result}`);
+    console.log(`[find-email] ${email} - score: ${score}, status: ${status}, result: ${result}`);
 
     return NextResponse.json({ found: true, verified, email, score, status, result, verifierUsed: true });
 

@@ -66,6 +66,10 @@ create table if not exists deals (
   ai_summary        text,
   draft_email       text,
 
+  -- Ownership: username of the Akro team member who owns this deal
+  -- (pari / rohit / eva / akshita). NULL = submitted via the public form, unclaimed.
+  owner             text,
+
   -- Workflow state
   email_status      email_status_enum not null default 'pending',
   approval_status   approval_status_enum not null default 'pending',
@@ -95,6 +99,7 @@ create index if not exists deals_approval_status_idx on deals (approval_status);
 create index if not exists deals_approval_token_idx  on deals (approval_token);
 create index if not exists deals_created_at_idx      on deals (created_at desc);
 create index if not exists deals_founder_email_idx   on deals (founder_email);
+create index if not exists deals_owner_idx           on deals (owner);
 
 -- ─── Row Level Security ───────────────────────────────────────
 -- The dashboard uses the service role key (bypasses RLS).

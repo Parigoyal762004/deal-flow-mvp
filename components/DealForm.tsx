@@ -271,7 +271,7 @@ export function DealForm() {
           <span className="ml-auto text-xs font-normal text-slate-400">Optional</span>
         </h2>
         <p className="text-xs text-slate-400 mb-3 -mt-1">
-          Not required — we can begin with a conversation and build from there.
+          Not required - we can begin with a conversation and build from there.
         </p>
         <FileUpload
           register={register}

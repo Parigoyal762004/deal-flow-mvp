@@ -41,7 +41,7 @@ export default async function MandatePage({
           Generate Mandate Agreement
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          Fill in the parameters on the left — the document updates live. Click{" "}
+          Fill in the parameters on the left - the document updates live. Click{" "}
           <strong>Download PDF</strong> to export with letterhead.
         </p>
       </div>

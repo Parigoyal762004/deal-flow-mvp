@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-// ── Bulk lending-services campaign — templated, NOT personalised by AI ─────────
+// ── Bulk lending-services campaign - templated, NOT personalised by AI ─────────
 // Sent from Pari (pari.goyal@akroventures.com) via the SAME GoDaddy SMTP as the
 // existing info@ flow, just with different credentials. No per-mail review: the
 // TEMPLATE is approved once, then merge-sent. Plain human language, no em dashes,
@@ -9,7 +9,7 @@ import nodemailer from "nodemailer";
 const CALENDLY_URL = "https://calendly.com/akroventures-info/30-min-stand-up-call";
 
 // Pari's sender. akroventures.com is GoDaddy "Professional Email" (Titan-powered
-// webmail, but the working SMTP relay is GoDaddy's smtpout.secureserver.net —
+// webmail, but the working SMTP relay is GoDaddy's smtpout.secureserver.net -
 // smtp.titan.email does NOT authenticate; this is documented in the README).
 // Same relay info@ uses, just different mailbox credentials.
 const PARI_SMTP_HOST = process.env.PARI_SMTP_HOST ?? "smtpout.secureserver.net";
@@ -23,7 +23,7 @@ export interface CampaignLead {
   email: string;
 }
 
-// The five services — locked copy. Cold email = skimmable: a bold label, then a
+// The five services - locked copy. Cold email = skimmable: a bold label, then a
 // plain sentence. No dashes.
 const SERVICES: { name: string; line: string }[] = [
   { name: "Unsecured Business Loans", line: "Working capital without pledging assets, underwritten on your cashflow (GST returns, bank statements, revenue) rather than just a credit score." },

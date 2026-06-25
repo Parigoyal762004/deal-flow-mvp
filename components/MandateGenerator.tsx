@@ -62,13 +62,13 @@ export function MandateGenerator({ deal }: Props) {
     const origin  = window.location.origin;
 
     const win = window.open("", "_blank", "width=900,height=800");
-    if (!win) { alert("Popup blocked — please allow popups for this site."); return; }
+    if (!win) { alert("Popup blocked - please allow popups for this site."); return; }
 
     win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Mandate — ${params.companyName}</title>
+  <title>Mandate - ${params.companyName}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -152,9 +152,9 @@ export function MandateGenerator({ deal }: Props) {
               onChange={(e) => set("mandateType", e.target.value as MandateType)}
               className="form-input text-sm w-full"
             >
-              <option value="equity_debt">Equity & Debt — Exclusive</option>
-              <option value="equity">Equity Only — Exclusive</option>
-              <option value="debt">Debt Only — Exclusive</option>
+              <option value="equity_debt">Equity & Debt - Exclusive</option>
+              <option value="equity">Equity Only - Exclusive</option>
+              <option value="debt">Debt Only - Exclusive</option>
             </select>
           </Field>
           <Field label={`Target Raise Amount ${amountStr ? `(${amountStr})` : ""}`}>
@@ -266,7 +266,7 @@ export function MandateGenerator({ deal }: Props) {
       <div className="flex-1 min-w-0">
         {/* Header bar */}
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-slate-500">Live preview — updates as you type</p>
+          <p className="text-xs text-slate-500">Live preview - updates as you type</p>
           <button onClick={handlePrint} className="btn-secondary text-xs px-3 py-1.5">
             📄 Print / Save PDF
           </button>
@@ -285,7 +285,7 @@ export function MandateGenerator({ deal }: Props) {
             overflow: "hidden",
           }}
         >
-          {/* Scaled content overlay — we scale it to fit the preview box */}
+          {/* Scaled content overlay - we scale it to fit the preview box */}
           <div
             style={{
               position: "absolute",

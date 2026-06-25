@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 
-// GET /api/dd-checklist?deal_id=xxx  — fetch all items for a deal
+// GET /api/dd-checklist?deal_id=xxx  - fetch all items for a deal
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const deal_id = searchParams.get("deal_id");
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ items: data });
 }
 
-// PATCH /api/dd-checklist  — update a single item's status and/or notes
+// PATCH /api/dd-checklist  - update a single item's status and/or notes
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();

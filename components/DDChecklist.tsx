@@ -17,7 +17,7 @@ const STATUS_OPTIONS: {
   { value: "received", label: "Received", icon: "✓",  activeClass: "bg-emerald-100 text-emerald-700 border-emerald-300 font-semibold" },
   { value: "pending",  label: "Pending",  icon: "○",  activeClass: "bg-yellow-100 text-yellow-700 border-yellow-300 font-semibold"   },
   { value: "missing",  label: "Missing",  icon: "!",  activeClass: "bg-red-100 text-red-600 border-red-300 font-semibold"            },
-  { value: "na",       label: "N/A",      icon: "—",  activeClass: "bg-slate-100 text-slate-500 border-slate-300 font-semibold"      },
+  { value: "na",       label: "N/A",      icon: "-",  activeClass: "bg-slate-100 text-slate-500 border-slate-300 font-semibold"      },
 ];
 
 const TAG_CLASS: Record<string, string> = {

@@ -26,6 +26,7 @@ export interface Deal {
   draft_email: string | null;
   ai_summary: string | null;
   approval_token: string | null;
+  owner: string | null; // username of the team member who owns this deal
   created_at: string;
   updated_at: string;
 }

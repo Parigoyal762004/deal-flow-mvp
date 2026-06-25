@@ -194,7 +194,7 @@ export default function CSVUpload() {
               };
             }
             if (data.found && data.email && !data.verified) {
-              // Found but couldn't confirm deliverability — show it but flag for manual check
+              // Found but couldn't confirm deliverability - show it but flag for manual check
               return {
                 ...r,
                 row: { ...r.row, founder_email: data.email },
@@ -280,7 +280,7 @@ export default function CSVUpload() {
       </p>
 
       <div className="mb-4 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-800 leading-relaxed">
-        <strong>Pipeline output?</strong> Columns like <code className="bg-amber-100 px-1 rounded">company_name</code>, <code className="bg-amber-100 px-1 rounded">estimated_email</code>, <code className="bg-amber-100 px-1 rounded">sector</code>, <code className="bg-amber-100 px-1 rounded">last_funding_round</code>, <code className="bg-amber-100 px-1 rounded">akro_rationale</code> are automatically mapped. Estimated emails will be flagged — verify before submitting.
+        <strong>Pipeline output?</strong> Columns like <code className="bg-amber-100 px-1 rounded">company_name</code>, <code className="bg-amber-100 px-1 rounded">estimated_email</code>, <code className="bg-amber-100 px-1 rounded">sector</code>, <code className="bg-amber-100 px-1 rounded">last_funding_round</code>, <code className="bg-amber-100 px-1 rounded">akro_rationale</code> are automatically mapped. Estimated emails will be flagged - verify before submitting.
       </div>
 
       <button onClick={downloadTemplate} className="text-xs text-brand-600 hover:text-brand-700 underline underline-offset-2 mb-4 block">

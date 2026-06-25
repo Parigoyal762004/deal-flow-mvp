@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { sendFounderEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/security";
 
 export const maxDuration = 30;
 
@@ -53,21 +54,25 @@ export async function GET(req: NextRequest) {
     return html("Error", "Database update failed. Please try again.", false);
   }
 
-  // If approved — send email to founder
+  // If approved - send email to founder
   if (isApprove) {
     try {
       await sendFounderEmail(deal);
       console.log(`[approve] Founder email sent for deal ${deal.id}`);
     } catch (emailErr) {
       console.error("[approve] Failed to send founder email:", emailErr);
-      // Don't fail the page — email issue logged in Vercel
+      // Don't fail the page - email issue logged in Vercel
     }
   }
 
-  const title   = isApprove ? `Approved — ${deal.startup_name}` : `Rejected — ${deal.startup_name}`;
+  // Escape DB-stored, originally user-submitted values before placing them into
+  // the HTML response — these come from the public submit form (stored XSS sink).
+  const startup = escapeHtml(deal.startup_name);
+  const founder = escapeHtml(deal.founder_name);
+  const title   = isApprove ? `Approved - ${startup}` : `Rejected - ${startup}`;
   const message = isApprove
-    ? `The response email to <strong>${deal.founder_name}</strong> at <strong>${deal.startup_name}</strong> has been sent.`
-    : `The draft email for <strong>${deal.startup_name}</strong> was rejected. No email will be sent to the founder.`;
+    ? `The response email to <strong>${founder}</strong> at <strong>${startup}</strong> has been sent.`
+    : `The draft email for <strong>${startup}</strong> was rejected. No email will be sent to the founder.`;
 
   return html(title, message, isApprove);
 }
