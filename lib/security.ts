@@ -65,6 +65,8 @@ const buckets = new Map<string, Bucket>();
 // Returns true if the request is ALLOWED, false if it should be blocked (429).
 export function rateLimit(key: string, max: number, windowMs: number): boolean {
   const now = Date.now();
+  // Probabilistic sweep (~1% of calls) so the Map can't grow unbounded.
+  if (Math.random() < 0.01) sweepRateLimits();
   const b = buckets.get(key);
   if (!b || now - b.first > windowMs) {
     buckets.set(key, { count: 1, first: now });

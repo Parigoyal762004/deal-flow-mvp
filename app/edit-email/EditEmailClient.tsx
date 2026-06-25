@@ -93,7 +93,7 @@ export default function EditEmailClient({
             <div className="text-xs text-slate-500 space-y-1">
               <div><span className="font-medium text-slate-700 w-10 inline-block">To:</span> {founderName} &lt;{founderEmail}&gt;</div>
               <div><span className="font-medium text-slate-700 w-10 inline-block">Re:</span> Akro Ventures - {startupName}</div>
-              <div><span className="font-medium text-slate-700 w-10 inline-block">From:</span> Rohit &amp; Akshita · info@akroventures.com</div>
+              <div><span className="font-medium text-slate-700 w-10 inline-block">From:</span> Akro Ventures · info@akroventures.com (per deal owner&apos;s mailbox)</div>
             </div>
           </div>
 

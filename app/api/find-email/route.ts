@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
-import { rateLimit } from "@/lib/security";
+import { rateLimit, clampText } from "@/lib/security";
 
 // POST /api/find-email
 // Body: { firstName, lastName, domain }
@@ -52,7 +52,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many lookups. Please slow down." }, { status: 429 });
   }
 
-  const { firstName, lastName, domain } = await req.json();
+  const raw = await req.json();
+  const firstName = clampText(raw.firstName, 100);
+  const lastName  = clampText(raw.lastName,  100);
+  const domain    = clampText(raw.domain,    253); // max DNS label length
 
   if (!firstName || !domain) {
     return NextResponse.json({ error: "Missing firstName or domain" }, { status: 400 });

@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { sendFounderEmail } from "@/lib/email";
+import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
+import { rateLimit, clampText } from "@/lib/security";
 
 export const maxDuration = 30;
 
 // POST /api/send-edited  { token: string, emailBody: string }
 export async function POST(req: NextRequest) {
   try {
-    const { token, emailBody } = await req.json();
+    const user = await getSessionUser(req.cookies.get(SESSION_COOKIE)?.value);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!rateLimit(`send-edited:${user}`, 20, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    }
 
-    if (!token || !emailBody?.trim()) {
+    const raw = await req.json();
+    const token     = clampText(raw.token, 36);     // UUIDs are 36 chars
+    const emailBody = clampText(raw.emailBody, 50_000);
+
+    if (!token || !emailBody) {
       return NextResponse.json({ error: "Missing token or email body" }, { status: 400 });
     }
 
