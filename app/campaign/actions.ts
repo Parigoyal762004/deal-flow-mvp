@@ -1,6 +1,6 @@
 "use server";
 import { cookies } from "next/headers";
-import { sendNextBatch, sendTestTo, getCampaignStats, DAILY_BATCH } from "@/lib/campaign";
+import { sendNextBatch, sendTestTo, getCampaignStats, getCampaignLeads, DAILY_BATCH } from "@/lib/campaign";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
 
 // The campaign sends AS whoever is signed in (their mailbox, CC'd to them).
@@ -12,8 +12,17 @@ export async function runBatchAction(count?: number) {
   try {
     const operator = await currentOperator();
     const res = await sendNextBatch(count ?? DAILY_BATCH, operator);
-    const stats = await getCampaignStats();
-    return { ok: true as const, res, stats };
+    const [stats, leads] = await Promise.all([getCampaignStats(), getCampaignLeads()]);
+    return { ok: true as const, res, stats, leads };
+  } catch (e) {
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+export async function getLeadsAction() {
+  try {
+    const leads = await getCampaignLeads();
+    return { ok: true as const, leads };
   } catch (e) {
     return { ok: false as const, error: (e as Error).message };
   }

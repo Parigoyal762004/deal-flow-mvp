@@ -1,9 +1,6 @@
-// Akro's services, as listed to STARTUPS in deal/founder emails.
-//
-// The bulk lending campaign (lib/campaign-email.ts) lists 5 services aimed at
-// large/established businesses. For startups we list the full set. Two are
-// confirmed below; the remaining ones are pending Akro's wording — add them here
-// and every startup email picks them up automatically (no other code change).
+// Akro's full service list for startup/founder emails (7 services).
+// campaign-email.ts lists the same 5 lending services for established-business outreach.
+// Adding a service here automatically includes it in every founder email.
 
 export interface AkroService {
   name: string;
@@ -19,5 +16,24 @@ export const STARTUP_SERVICES: AkroService[] = [
     name: "Startup Consultation",
     line: "Strategic clarity beyond just capital. We go deep on the fundamentals investors and lenders scrutinise, the ones that often decide whether a business can raise at all, and help you avoid the traps we have seen across dozens of raises.",
   },
-  // TODO: add the remaining 5 startup services here once Akro confirms the copy.
+  {
+    name: "Unsecured Business Loans",
+    line: "Working capital without pledging assets, underwritten on your cashflow (GST returns, bank statements, revenue) rather than just a credit score.",
+  },
+  {
+    name: "Secured Loans",
+    line: "Larger financing at better rates, against property, listed shares, fixed deposits, or machinery.",
+  },
+  {
+    name: "Project Funding",
+    line: "Dedicated capital for large projects, with milestone-based drawdowns and hybrid debt-equity structures.",
+  },
+  {
+    name: "FDI & ECB Advisory",
+    line: "Lower-cost cross-border capital, with the RBI and FEMA structuring, filings, and compliance handled for you.",
+  },
+  {
+    name: "Export Invoice Factoring",
+    line: "Up to 90% of your export invoice value on Day 0, collateral-free, while your buyer pays later.",
+  },
 ];

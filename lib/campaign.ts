@@ -90,3 +90,25 @@ export async function sendNextBatch(count = DAILY_BATCH, senderUsername: string 
 export async function sendTestTo(email: string, senderUsername: string | null = null): Promise<string> {
   return sendCampaignEmail({ firstName: "there", company: "Acme Exports (sample)", email }, senderUsername);
 }
+
+export interface CampaignLeadRow {
+  id: string;
+  company: string;
+  first_name: string | null;
+  email: string;
+  status: string;
+  sent_at: string | null;
+  error: string | null;
+}
+
+// Fetch leads for the campaign dashboard — most recently sent first, then new ones.
+export async function getCampaignLeads(limit = 200): Promise<CampaignLeadRow[]> {
+  const supa = createServerClient();
+  const { data } = await supa
+    .from("leads")
+    .select("id, company, first_name, email, status, sent_at, error")
+    .order("sent_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return data ?? [];
+}
