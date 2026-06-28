@@ -23,14 +23,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <nav className="fixed top-0 inset-x-0 z-50 bg-white border-b border-brand-100 h-14 flex items-center px-4 sm:px-6">
-          <a href={loggedIn ? "/dashboard" : "/"} className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0">
+          <a href={loggedIn ? "/dashboard" : "/login"} className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/akro-logo.png" alt="Akro Ventures" className="h-5 sm:h-7 w-auto max-w-[112px] sm:max-w-none" />
             <span className="hidden xs:inline text-brand-200 font-normal text-sm">/</span>
             <span className="hidden xs:inline font-display font-semibold text-ink text-sm tracking-tight">Deal Flow</span>
           </a>
           <div className="ml-auto flex items-center gap-3 sm:gap-5">
-            <a href="/" className="hidden sm:block text-sm text-plum-600 hover:text-ink transition-colors">
+            <a href="/submit" className="hidden sm:block text-sm text-plum-600 hover:text-ink transition-colors">
               Submit Deal
             </a>
             {loggedIn && (

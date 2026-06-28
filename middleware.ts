@@ -10,8 +10,8 @@ import { isSameOrigin } from "@/lib/security";
 //    protected by an unguessable token, so it must stay open.
 // Everything else (dashboard, campaign, find-email, send-edited, DD) requires login.
 const PUBLIC = [
-  "/",
   "/login",
+  "/submit",
   "/api/auth/login",
   "/api/auth/logout",
   "/api/submit-deal",
