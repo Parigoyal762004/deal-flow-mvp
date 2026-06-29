@@ -80,6 +80,58 @@ export async function sendSelectedAction(
   }
 }
 
+// Convert a replied campaign lead into a full deal in the pipeline.
+export async function convertLeadToDealAction(leadId: string) {
+  const operator = await currentOperator();
+  if (!operator) return { ok: false as const, error: "Unauthorized." };
+
+  const supa = createServerClient();
+
+  // Fetch the lead
+  const { data: lead, error: fetchErr } = await supa
+    .from("leads")
+    .select("id, company, first_name, email, status")
+    .eq("id", leadId)
+    .single();
+
+  if (fetchErr || !lead) return { ok: false as const, error: "Lead not found." };
+
+  // Check a deal for this email doesn't already exist
+  const { data: existing } = await supa
+    .from("deals")
+    .select("id")
+    .eq("founder_email", lead.email)
+    .maybeSingle();
+
+  if (existing) return { ok: false as const, error: "A deal for this email already exists.", dealId: existing.id };
+
+  // Create the deal
+  const token = crypto.randomUUID();
+  const { data: deal, error: insertErr } = await supa
+    .from("deals")
+    .insert({
+      startup_name:     lead.company,
+      founder_name:     lead.first_name ?? "",
+      founder_email:    lead.email,
+      source:           "Cold Outreach",
+      owner:            operator,
+      approval_status:  "pending",
+      email_status:     "pending",
+      notes:            "Replied to Akro Ventures lending campaign email.",
+      approval_token:   token,
+      additional_links: [],
+    })
+    .select("id")
+    .single();
+
+  if (insertErr || !deal) return { ok: false as const, error: insertErr?.message ?? "Failed to create deal." };
+
+  // Mark lead as converted so it doesn't show in the replies queue again
+  await supa.from("leads").update({ status: "suppressed" }).eq("id", leadId);
+
+  return { ok: true as const, dealId: deal.id };
+}
+
 const VALID_STATUSES = ["new", "sent", "replied", "bounced", "skipped", "suppressed"] as const;
 type LeadStatus = (typeof VALID_STATUSES)[number];
 

@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import {
   runBatchAction, runTestAction, getLeadsAction,
   previewBatchAction, sendSelectedAction, updateLeadStatusAction,
+  convertLeadToDealAction,
 } from "@/app/campaign/actions";
 import type { CampaignLeadRow, CampaignStats, LeadEmailPreview } from "@/lib/campaign";
 
@@ -245,6 +246,32 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
     });
   }
 
+  // ── Convert replied lead to deal ──────────────────────────────────────────────
+  const [converting, startConvert] = useTransition();
+  const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [convertMsg, setConvertMsg] = useState<Record<string, string>>({});
+
+  function convertToDeal(lead: CampaignLeadRow) {
+    setConvertingId(lead.id);
+    setConvertMsg(prev => ({ ...prev, [lead.id]: "" }));
+    startConvert(async () => {
+      const r = await convertLeadToDealAction(lead.id);
+      setConvertingId(null);
+      if (!r.ok) {
+        // If deal already exists, still surface the link
+        if ("dealId" in r && r.dealId) {
+          window.location.href = `/dashboard/${r.dealId}`;
+        } else {
+          setConvertMsg(prev => ({ ...prev, [lead.id]: r.error ?? "Failed." }));
+        }
+        return;
+      }
+      // Remove from replied list and navigate to the new deal
+      setLeads(prev => prev.filter(l => l.id !== lead.id));
+      window.location.href = `/dashboard/${r.dealId}`;
+    });
+  }
+
   // ── Status change in table ────────────────────────────────────────────────────
   function handleStatusChange(id: string, status: LeadStatus) {
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
@@ -273,6 +300,71 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
         <p style={{ fontSize: 14, color: MID, margin: "8px 0 28px" }}>
           Lending-services outreach{currentUser ? ` · signed in as ${currentUser}` : ""}. {batchSize} per day, verified and throttled.
         </p>
+
+        {/* ── Replies inbox ── only shown when there are replied leads ───────── */}
+        {leads.filter(l => l.status === "replied").length > 0 && (() => {
+          const replied = leads.filter(l => l.status === "replied");
+          return (
+            <div style={{ background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 12, padding: "20px 24px", marginBottom: 28 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 18 }}>📬</span>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1e3a5f", margin: 0 }}>
+                    {replied.length} {replied.length === 1 ? "Reply" : "Replies"} — act now
+                  </p>
+                  <p style={{ fontSize: 12, color: "#3b5a8a", margin: "2px 0 0" }}>
+                    These companies replied to your outreach. Convert them to a deal to start the full pipeline.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                {replied.map(lead => (
+                  <div key={lead.id} style={{ background: "#fff", border: "1px solid #bfdbfe", borderRadius: 9, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" as const }}>
+                    {/* Avatar */}
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#dbeafe", color: "#1d4ed8", fontWeight: 700, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {lead.company.charAt(0).toUpperCase()}
+                    </div>
+
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: INK }}>{lead.company}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: MID }}>{lead.email}</p>
+                      {lead.sent_at && (
+                        <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>Sent {fmtDate(lead.sent_at)}{lead.sent_by ? ` by ${lead.sent_by}` : ""}</p>
+                      )}
+                    </div>
+
+                    {/* Hint */}
+                    <div style={{ fontSize: 12, color: "#3b5a8a", background: "#eff6ff", borderRadius: 6, padding: "4px 10px", flexShrink: 0 }}>
+                      Check inbox → reply → convert
+                    </div>
+
+                    {/* Error */}
+                    {convertMsg[lead.id] && (
+                      <p style={{ fontSize: 12, color: "#b91c1c", margin: 0, width: "100%" }}>{convertMsg[lead.id]}</p>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                      <button
+                        onClick={() => convertToDeal(lead)}
+                        disabled={converting && convertingId === lead.id}
+                        style={{ background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as const }}>
+                        {converting && convertingId === lead.id ? "Creating…" : "Convert to Deal →"}
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(lead.id, "suppressed")}
+                        style={{ background: "none", border: "1px solid #bfdbfe", borderRadius: 8, padding: "9px 12px", fontSize: 12, color: "#6b7280", cursor: "pointer" }}>
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 28 }}>
