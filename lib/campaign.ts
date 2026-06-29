@@ -74,7 +74,7 @@ export async function sendNextBatch(count = DAILY_BATCH, senderUsername: string 
     try {
       const cl: CampaignLead = { firstName: lead.first_name ?? "", company: lead.company, email: lead.email };
       const messageId = await sendCampaignEmail(cl, senderUsername);
-      await supa.from("leads").update({ status: "sent", sent_at: new Date().toISOString(), message_id: messageId, error: null }).eq("id", lead.id);
+      await supa.from("leads").update({ status: "sent", sent_at: new Date().toISOString(), message_id: messageId, sent_by: senderUsername, error: null }).eq("id", lead.id);
       res.sent++;
     } catch (e) {
       await supa.from("leads").update({ status: "bounced", error: (e as Error).message?.slice(0, 300) }).eq("id", lead.id);
@@ -98,19 +98,62 @@ export interface CampaignLeadRow {
   email: string;
   status: string;
   sent_at: string | null;
+  sent_by: string | null;
   error: string | null;
 }
 
 // Fetch contacted leads only (sent/replied/bounced/skipped/suppressed) — not queued.
-// Ordered most-recent first. No arbitrary cap since the contacted set is small.
 export async function getCampaignLeads(limit = 2000): Promise<CampaignLeadRow[]> {
   const supa = createServerClient();
   const { data } = await supa
     .from("leads")
-    .select("id, company, first_name, email, status, sent_at, error")
+    .select("id, company, first_name, email, status, sent_at, sent_by, error")
     .in("status", ["sent", "replied", "bounced", "skipped", "suppressed"])
     .order("sent_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
   return data ?? [];
+}
+
+// Preview next N new leads without sending — for the review-before-send flow.
+export async function previewNextLeads(count: number): Promise<CampaignLeadRow[]> {
+  const supa = createServerClient();
+  const { data } = await supa
+    .from("leads")
+    .select("id, company, first_name, email, status, sent_at, sent_by, error")
+    .eq("status", "new")
+    .order("created_at", { ascending: true })
+    .limit(count);
+  return data ?? [];
+}
+
+// Send a specific set of lead IDs (chosen after preview review).
+export async function sendSelectedLeads(ids: string[], senderUsername: string | null): Promise<BatchResult> {
+  const supa = createServerClient();
+  const { data: leads, error } = await supa
+    .from("leads")
+    .select("id, company, first_name, email")
+    .in("id", ids)
+    .eq("status", "new");
+  if (error) throw new Error(error.message);
+
+  const res: BatchResult = { attempted: leads?.length ?? 0, sent: 0, skipped: 0, failed: 0 };
+  for (const lead of leads ?? []) {
+    if (!(await domainHasMx(lead.email))) {
+      await supa.from("leads").update({ status: "skipped", error: "no MX record" }).eq("id", lead.id);
+      res.skipped++;
+      continue;
+    }
+    try {
+      const cl: CampaignLead = { firstName: lead.first_name ?? "", company: lead.company, email: lead.email };
+      const messageId = await sendCampaignEmail(cl, senderUsername);
+      await supa.from("leads").update({ status: "sent", sent_at: new Date().toISOString(), message_id: messageId, sent_by: senderUsername, error: null }).eq("id", lead.id);
+      res.sent++;
+    } catch (e) {
+      await supa.from("leads").update({ status: "bounced", error: (e as Error).message?.slice(0, 300) }).eq("id", lead.id);
+      res.failed++;
+    }
+    await sleep(1200 + Math.random() * 1500);
+  }
+  return res;
 }
