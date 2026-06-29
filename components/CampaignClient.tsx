@@ -121,10 +121,13 @@ function ReviewLeadCard({ lead, preview, selected, onToggle, editMap, onEdit }: 
       {open && (
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: "14px 16px", background: "#fafafa" }}>
           <label style={{ fontSize: 11, fontWeight: 700, color: MID, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>Subject</label>
-          <input value={subject} onChange={e => onEdit(lead.id, "subject", e.target.value)}
+          <input value={subject} onChange={e => onEdit(lead.id, "subject", e.target.value)} maxLength={200}
             style={{ display: "block", width: "100%", marginTop: 4, marginBottom: 14, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: "9px 12px", fontSize: 13, color: INK, background: "#fff", outline: "none", boxSizing: "border-box" as const }} />
-          <label style={{ fontSize: 11, fontWeight: 700, color: MID, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>Body</label>
-          <textarea value={text} onChange={e => onEdit(lead.id, "text", e.target.value)} rows={14}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: MID, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>Body</label>
+            <span style={{ fontSize: 11, color: text.length > 4500 ? "#b91c1c" : "#9ca3af" }}>{text.length}/5000</span>
+          </div>
+          <textarea value={text} onChange={e => onEdit(lead.id, "text", e.target.value)} rows={14} maxLength={5000}
             style={{ display: "block", width: "100%", marginTop: 4, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: "10px 12px", fontSize: 13, color: INK, lineHeight: 1.6, background: "#fff", outline: "none", resize: "vertical", boxSizing: "border-box" as const, fontFamily: "inherit" }} />
           {isDirty && (
             <button onClick={() => { onEdit(lead.id, "subject", "##RESET##"); }}
@@ -196,6 +199,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
     startReview(async () => {
       const r = await previewBatchAction(10);
       if (!r.ok) { setReviewResult(`Error: ${r.error}`); return; }
+      if (!r.leads.length) { setReviewResult("No new leads available to preview."); return; }
       setReviewLeads(r.leads);
       setReviewPreviews(r.previews);
       setSelectedIds(new Set(r.leads.map(l => l.id)));
@@ -281,7 +285,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
         </div>
 
         {/* Two send options */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginBottom: 18 }}>
 
           {/* Review 10 */}
           <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "22px 24px" }}>

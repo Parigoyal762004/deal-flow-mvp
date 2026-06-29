@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { sendFounderEmail } from "@/lib/email";
-import { escapeHtml } from "@/lib/security";
+import { escapeHtml, rateLimit, clientIp } from "@/lib/security";
 
 export const maxDuration = 30;
 
@@ -64,6 +64,11 @@ export async function GET(req: NextRequest) {
 
 // ── POST /api/approve — form submit from the confirmation page ────────────────
 export async function POST(req: NextRequest) {
+  // 30 attempts per hour per IP — blocks token brute-forcing
+  if (!rateLimit(`approve:${clientIp(req)}`, 30, 60 * 60 * 1000)) {
+    return html("Too Many Requests", "Too many approval attempts. Please try again later.", "error", "");
+  }
+
   let token = "", action = "";
   const ct = req.headers.get("content-type") ?? "";
   if (ct.includes("application/x-www-form-urlencoded") || ct.includes("multipart/form-data")) {

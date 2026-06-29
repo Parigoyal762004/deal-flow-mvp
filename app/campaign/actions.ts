@@ -6,6 +6,7 @@ import {
 } from "@/lib/campaign";
 import { createServerClient } from "@/lib/supabase-server";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
+import { clampText } from "@/lib/security";
 
 async function currentOperator(): Promise<string | null> {
   return getSessionUser(cookies().get(SESSION_COOKIE)?.value);
@@ -62,7 +63,16 @@ export async function sendSelectedAction(
   if (!ids.length) return { ok: false as const, error: "No leads selected." };
   try {
     const operator = await currentOperator();
-    const res = await sendSelectedLeads(ids, operator, overrides);
+    // Clamp any operator-supplied overrides so they can't send huge payloads
+    const safeOverrides = overrides
+      ? Object.fromEntries(
+          Object.entries(overrides).map(([id, ov]) => [
+            id,
+            { subject: clampText(ov.subject, 200), text: clampText(ov.text, 5000) },
+          ])
+        )
+      : undefined;
+    const res = await sendSelectedLeads(ids, operator, safeOverrides);
     const [stats, leads] = await Promise.all([getCampaignStats(), getCampaignLeads()]);
     return { ok: true as const, res, stats, leads };
   } catch (e) {
@@ -74,6 +84,8 @@ const VALID_STATUSES = ["new", "sent", "replied", "bounced", "skipped", "suppres
 type LeadStatus = (typeof VALID_STATUSES)[number];
 
 export async function updateLeadStatusAction(id: string, status: LeadStatus) {
+  const operator = await currentOperator();
+  if (!operator) return { ok: false as const, error: "Unauthorized." };
   if (!id || !VALID_STATUSES.includes(status)) return { ok: false as const, error: "Invalid." };
   try {
     const supa = createServerClient();

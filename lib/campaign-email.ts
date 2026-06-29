@@ -1,4 +1,5 @@
 import { resolveSender, transportFor, type Sender } from "./mailer";
+import { escapeHtml } from "./security";
 
 // ── Bulk lending-services campaign - templated, NOT personalised by AI ─────────
 // Sent AS whoever is signed in when they run the batch, from their own mailbox
@@ -93,8 +94,9 @@ function buildCampaignHtml(lead: CampaignLead, sender: Sender): string {
 }
 
 function textToHtml(text: string): string {
+  // Escape first so operator edits can never inject HTML/script into outbound emails
   return `<!DOCTYPE html><html><body style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.7;max-width:560px;padding:32px 20px;">${
-    text.split(/\n\n+/).map(p => `<p style="margin:0 0 14px;">${p.replace(/\n/g, "<br>")}</p>`).join("")
+    escapeHtml(text).split(/\n\n+/).map(p => `<p style="margin:0 0 14px;">${p.replace(/\n/g, "<br>")}</p>`).join("")
   }</body></html>`;
 }
 

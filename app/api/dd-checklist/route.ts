@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/supabase-server";
+import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
+
+async function requireAuth() {
+  return getSessionUser(cookies().get(SESSION_COOKIE)?.value);
+}
 
 // GET /api/dd-checklist?deal_id=xxx  - fetch all items for a deal
 export async function GET(req: NextRequest) {
+  const user = await requireAuth();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const deal_id = searchParams.get("deal_id");
   if (!deal_id) {
@@ -25,6 +34,9 @@ export async function GET(req: NextRequest) {
 
 // PATCH /api/dd-checklist  - update a single item's status and/or notes
 export async function PATCH(req: NextRequest) {
+  const user = await requireAuth();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const body = await req.json();
     const { deal_id, item_key, status, notes } = body as {
