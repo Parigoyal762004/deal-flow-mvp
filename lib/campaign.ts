@@ -1,5 +1,6 @@
 import { createServerClient } from "./supabase-server";
-import { sendCampaignEmail, type CampaignLead } from "./campaign-email";
+import { sendCampaignEmail, buildCampaignSubject, buildCampaignText, type CampaignLead } from "./campaign-email";
+import { resolveSender } from "./mailer";
 
 export const DAILY_BATCH = Number(process.env.CAMPAIGN_BATCH_SIZE ?? 20);
 
@@ -127,8 +128,24 @@ export async function previewNextLeads(count: number): Promise<CampaignLeadRow[]
   return data ?? [];
 }
 
+export interface LeadEmailPreview { id: string; subject: string; text: string; }
+
+// Build the rendered subject + text for a set of leads (shown in the review panel).
+export function buildLeadPreviews(leads: CampaignLeadRow[], senderUsername: string | null): LeadEmailPreview[] {
+  const sender = resolveSender(senderUsername);
+  return leads.map(l => {
+    const lead: CampaignLead = { firstName: l.first_name ?? "", company: l.company, email: l.email };
+    return { id: l.id, subject: buildCampaignSubject(lead), text: buildCampaignText(lead, sender) };
+  });
+}
+
 // Send a specific set of lead IDs (chosen after preview review).
-export async function sendSelectedLeads(ids: string[], senderUsername: string | null): Promise<BatchResult> {
+// `overrides` is a map from lead ID to edited subject/text; uses template if absent.
+export async function sendSelectedLeads(
+  ids: string[],
+  senderUsername: string | null,
+  overrides?: Record<string, { subject: string; text: string }>,
+): Promise<BatchResult> {
   const supa = createServerClient();
   const { data: leads, error } = await supa
     .from("leads")
@@ -146,7 +163,8 @@ export async function sendSelectedLeads(ids: string[], senderUsername: string | 
     }
     try {
       const cl: CampaignLead = { firstName: lead.first_name ?? "", company: lead.company, email: lead.email };
-      const messageId = await sendCampaignEmail(cl, senderUsername);
+      const ov = overrides?.[lead.id];
+      const messageId = await sendCampaignEmail(cl, senderUsername, ov);
       await supa.from("leads").update({ status: "sent", sent_at: new Date().toISOString(), message_id: messageId, sent_by: senderUsername, error: null }).eq("id", lead.id);
       res.sent++;
     } catch (e) {

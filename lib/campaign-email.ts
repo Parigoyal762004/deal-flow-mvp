@@ -92,15 +92,28 @@ function buildCampaignHtml(lead: CampaignLead, sender: Sender): string {
 </html>`;
 }
 
-export async function sendCampaignEmail(lead: CampaignLead, senderUsername: string | null): Promise<string> {
+function textToHtml(text: string): string {
+  return `<!DOCTYPE html><html><body style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:15px;color:#1a1a1a;line-height:1.7;max-width:560px;padding:32px 20px;">${
+    text.split(/\n\n+/).map(p => `<p style="margin:0 0 14px;">${p.replace(/\n/g, "<br>")}</p>`).join("")
+  }</body></html>`;
+}
+
+export async function sendCampaignEmail(
+  lead: CampaignLead,
+  senderUsername: string | null,
+  override?: { subject?: string; text?: string },
+): Promise<string> {
   const sender = resolveSender(senderUsername);
+  const subject = override?.subject ?? buildCampaignSubject(lead);
+  const text    = override?.text    ?? buildCampaignText(lead, sender);
+  const html    = override?.text    ? textToHtml(override.text) : buildCampaignHtml(lead, sender);
   const info = await transportFor(sender).sendMail({
     from: `"${sender.fullName} · Akro Ventures" <${sender.email}>`,
     to: lead.email,
-    cc: sender.email, // CC the operator themselves (sent via their own SMTP)
-    subject: buildCampaignSubject(lead),
-    text: buildCampaignText(lead, sender),
-    html: buildCampaignHtml(lead, sender),
+    cc: sender.email,
+    subject,
+    text,
+    html,
   });
   return info.messageId;
 }

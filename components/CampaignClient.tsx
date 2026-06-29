@@ -1,16 +1,22 @@
 "use client";
 import { useState, useTransition } from "react";
-import { runBatchAction, runTestAction, getLeadsAction, previewBatchAction, sendSelectedAction } from "@/app/campaign/actions";
-import type { CampaignLeadRow, CampaignStats } from "@/lib/campaign";
+import {
+  runBatchAction, runTestAction, getLeadsAction,
+  previewBatchAction, sendSelectedAction, updateLeadStatusAction,
+} from "@/app/campaign/actions";
+import type { CampaignLeadRow, CampaignStats, LeadEmailPreview } from "@/lib/campaign";
 
 const TEAL = "#1A4A44", GOLD = "#D4A017", INK = "#28112B", MID = "#4a6060", OFF = "#f7f8f6", BORDER = "#dde3e0";
+
+const STATUS_OPTS = ["new", "sent", "replied", "bounced", "skipped", "suppressed"] as const;
+type LeadStatus = (typeof STATUS_OPTS)[number];
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   sent:       { bg: "#dcfce7", color: "#166534", label: "Sent" },
   replied:    { bg: "#dbeafe", color: "#1d4ed8", label: "Replied" },
   bounced:    { bg: "#fee2e2", color: "#991b1b", label: "Bounced" },
   skipped:    { bg: "#f3f4f6", color: "#6b7280", label: "Skipped" },
-  suppressed: { bg: "#f3f4f6", color: "#6b7280", label: "Suppressed" },
+  suppressed: { bg: "#fef3c7", color: "#92400e", label: "Suppressed" },
   new:        { bg: "#fef9ec", color: "#92400e", label: "Queued" },
 };
 
@@ -18,18 +24,12 @@ const SENDER_COLOR: Record<string, string> = {
   pari: "#1A4A44", rohit: "#d97706", eva: "#7c3aed", akshita: "#be185d",
 };
 
-function StatusChip({ status }: { status: string }) {
-  const s = STATUS_STYLE[status] ?? { bg: "#f3f4f6", color: "#374151", label: status };
-  return <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, padding: "3px 8px", borderRadius: 20 }}>{s.label}</span>;
-}
-
 function SenderChip({ name }: { name: string | null }) {
   if (!name) return <span style={{ color: "#9ca3af", fontSize: 12 }}>—</span>;
   const color = SENDER_COLOR[name.toLowerCase()] ?? "#374151";
-  const initial = name.charAt(0).toUpperCase();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-      <span style={{ width: 20, height: 20, borderRadius: "50%", background: color, color: "#fff", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{initial}</span>
+      <span style={{ width: 20, height: 20, borderRadius: "50%", background: color, color: "#fff", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{name.charAt(0).toUpperCase()}</span>
       <span style={{ fontSize: 12, color: MID, textTransform: "capitalize" as const }}>{name}</span>
     </span>
   );
@@ -49,6 +49,96 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
+// ── Inline editable status chip ───────────────────────────────────────────────
+function StatusCell({ lead, onChanged }: {
+  lead: CampaignLeadRow;
+  onChanged: (id: string, status: LeadStatus) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const s = STATUS_STYLE[lead.status] ?? { bg: "#f3f4f6", color: "#374151", label: lead.status };
+
+  async function handleChange(next: LeadStatus) {
+    setSaving(true);
+    setEditing(false);
+    const r = await updateLeadStatusAction(lead.id, next);
+    setSaving(false);
+    if (r.ok) onChanged(lead.id, next);
+  }
+
+  if (editing) {
+    return (
+      <select autoFocus value={lead.status} onChange={e => handleChange(e.target.value as LeadStatus)} onBlur={() => setEditing(false)}
+        style={{ fontSize: 12, border: `1.5px solid ${TEAL}`, borderRadius: 6, padding: "3px 6px", color: INK, background: "#fff", cursor: "pointer" }}>
+        {STATUS_OPTS.map(o => (
+          <option key={o} value={o}>{STATUS_STYLE[o]?.label ?? o}</option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <span title="Click to change status" onClick={() => !saving && setEditing(true)}
+      style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, padding: "3px 8px", borderRadius: 20, cursor: "pointer", userSelect: "none" as const }}>
+      {saving ? "…" : s.label}
+    </span>
+  );
+}
+
+// ── Per-lead review card with editable email ──────────────────────────────────
+function ReviewLeadCard({ lead, preview, selected, onToggle, editMap, onEdit }: {
+  lead: CampaignLeadRow;
+  preview: LeadEmailPreview;
+  selected: boolean;
+  onToggle: () => void;
+  editMap: Record<string, { subject: string; text: string }>;
+  onEdit: (id: string, field: "subject" | "text", val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const edited = editMap[lead.id];
+  const subject = edited?.subject ?? preview.subject;
+  const text    = edited?.text    ?? preview.text;
+  const isDirty = !!edited;
+
+  return (
+    <div style={{ border: `1.5px solid ${selected ? TEAL : BORDER}`, borderRadius: 10, background: selected ? "#f5faf9" : "#fff", marginBottom: 10, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+        <input type="checkbox" checked={selected} onChange={onToggle}
+          style={{ width: 16, height: 16, accentColor: TEAL, cursor: "pointer", flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: INK }}>{lead.company}</p>
+          <p style={{ margin: 0, fontSize: 12, color: MID }}>{lead.email}</p>
+        </div>
+        {isDirty && (
+          <span style={{ fontSize: 11, background: "#fef9ec", color: "#92400e", border: "1px solid #fde68a", borderRadius: 12, padding: "2px 8px", fontWeight: 700 }}>edited</span>
+        )}
+        <button onClick={() => setOpen(o => !o)}
+          style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "4px 10px", fontSize: 12, color: MID, cursor: "pointer", flexShrink: 0 }}>
+          {open ? "Hide ▲" : "Preview / Edit ▼"}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: "14px 16px", background: "#fafafa" }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: MID, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>Subject</label>
+          <input value={subject} onChange={e => onEdit(lead.id, "subject", e.target.value)}
+            style={{ display: "block", width: "100%", marginTop: 4, marginBottom: 14, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: "9px 12px", fontSize: 13, color: INK, background: "#fff", outline: "none", boxSizing: "border-box" as const }} />
+          <label style={{ fontSize: 11, fontWeight: 700, color: MID, textTransform: "uppercase" as const, letterSpacing: "0.08em" }}>Body</label>
+          <textarea value={text} onChange={e => onEdit(lead.id, "text", e.target.value)} rows={14}
+            style={{ display: "block", width: "100%", marginTop: 4, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: "10px 12px", fontSize: 13, color: INK, lineHeight: 1.6, background: "#fff", outline: "none", resize: "vertical", boxSizing: "border-box" as const, fontFamily: "inherit" }} />
+          {isDirty && (
+            <button onClick={() => { onEdit(lead.id, "subject", "##RESET##"); }}
+              style={{ marginTop: 8, background: "none", border: "none", fontSize: 12, color: "#9ca3af", cursor: "pointer", padding: 0 }}>
+              ↩ Reset to template
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 interface Props {
   stats: CampaignStats;
   leads: CampaignLeadRow[];
@@ -60,14 +150,16 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
   const [stats, setStats] = useState(initial);
   const [leads, setLeads] = useState(initialLeads);
 
-  // Direct send state
+  // Direct send
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState("");
   const [pending, startTransition] = useTransition();
 
-  // Review mode state
+  // Review mode
   const [reviewLeads, setReviewLeads] = useState<CampaignLeadRow[]>([]);
+  const [reviewPreviews, setReviewPreviews] = useState<LeadEmailPreview[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editMap, setEditMap] = useState<Record<string, { subject: string; text: string }>>({});
   const [reviewing, startReview] = useTransition();
   const [sending, startSend] = useTransition();
   const [reviewResult, setReviewResult] = useState("");
@@ -77,11 +169,11 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
   const [testMsg, setTestMsg] = useState("");
   const [testing, startTest] = useTransition();
 
-  // Lead list filters
+  // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // ── Direct send ───────────────────────────────────────────────────────────
+  // ── Direct send ──────────────────────────────────────────────────────────────
   function sendDirect() {
     setConfirming(false);
     setResult("");
@@ -94,41 +186,53 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
     });
   }
 
-  // ── Review mode ───────────────────────────────────────────────────────────
+  // ── Review mode ──────────────────────────────────────────────────────────────
   function loadPreview() {
     setReviewLeads([]);
+    setReviewPreviews([]);
     setSelectedIds(new Set());
+    setEditMap({});
     setReviewResult("");
     startReview(async () => {
       const r = await previewBatchAction(10);
       if (!r.ok) { setReviewResult(`Error: ${r.error}`); return; }
       setReviewLeads(r.leads);
+      setReviewPreviews(r.previews);
       setSelectedIds(new Set(r.leads.map(l => l.id)));
     });
   }
 
-  function toggleLead(id: string) {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+  function handleEdit(id: string, field: "subject" | "text", val: string) {
+    setEditMap(prev => {
+      if (val === "##RESET##") {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      const current = prev[id] ?? {
+        subject: reviewPreviews.find(p => p.id === id)?.subject ?? "",
+        text:    reviewPreviews.find(p => p.id === id)?.text ?? "",
+      };
+      return { ...prev, [id]: { ...current, [field]: val } };
     });
   }
 
   function sendReviewed() {
     setReviewResult("");
     startSend(async () => {
-      const r = await sendSelectedAction(Array.from(selectedIds));
+      const r = await sendSelectedAction(Array.from(selectedIds), Object.keys(editMap).length ? editMap : undefined);
       if (!r.ok) { setReviewResult(`Error: ${r.error}`); return; }
       setStats(r.stats);
       if (r.leads) setLeads(r.leads);
       setReviewLeads([]);
+      setReviewPreviews([]);
       setSelectedIds(new Set());
+      setEditMap({});
       setReviewResult(`Sent ${r.res.sent} · skipped ${r.res.skipped} · failed ${r.res.failed}.`);
     });
   }
 
-  // ── Test send ─────────────────────────────────────────────────────────────
+  // ── Test send ─────────────────────────────────────────────────────────────────
   function sendTest() {
     setTestMsg("");
     startTest(async () => {
@@ -137,7 +241,11 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
     });
   }
 
-  // ── Lead list refresh ─────────────────────────────────────────────────────
+  // ── Status change in table ────────────────────────────────────────────────────
+  function handleStatusChange(id: string, status: LeadStatus) {
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+  }
+
   function refreshLeads() {
     startTransition(async () => {
       const r = await getLeadsAction();
@@ -175,52 +283,55 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
         {/* Two send options */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
 
-          {/* Option 1: Review 10 first */}
+          {/* Review 10 */}
           <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "22px 24px" }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: INK, margin: "0 0 4px" }}>Review 10 before sending</p>
-            <p style={{ fontSize: 13, color: MID, margin: "0 0 16px" }}>See who's next, uncheck anyone you want to skip, then confirm send.</p>
+            <p style={{ fontSize: 13, color: MID, margin: "0 0 16px" }}>See the actual email for each lead, edit if needed, uncheck to skip anyone, then send.</p>
 
             {reviewLeads.length === 0 ? (
               <button onClick={loadPreview} disabled={reviewing || stats.new === 0}
-                style={{ background: stats.new === 0 ? "#cbd5d5" : "#fff", color: stats.new === 0 ? "#fff" : TEAL, border: `1.5px solid ${stats.new === 0 ? "#cbd5d5" : TEAL}`, borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: stats.new === 0 ? "default" : "pointer" }}>
+                style={{ background: stats.new === 0 ? "#e5e7eb" : "#fff", color: stats.new === 0 ? "#9ca3af" : TEAL, border: `1.5px solid ${stats.new === 0 ? "#e5e7eb" : TEAL}`, borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: stats.new === 0 ? "default" : "pointer" }}>
                 {reviewing ? "Loading…" : stats.new === 0 ? "No leads left" : "Preview next 10"}
               </button>
             ) : (
               <div>
-                <div style={{ border: `1px solid ${BORDER}`, borderRadius: 8, overflow: "hidden", marginBottom: 12 }}>
-                  {reviewLeads.map((lead, i) => (
-                    <label key={lead.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: i % 2 === 0 ? "#fff" : "#fafafa", borderBottom: i < reviewLeads.length - 1 ? `1px solid ${BORDER}` : "none", cursor: "pointer" }}>
-                      <input type="checkbox" checked={selectedIds.has(lead.id)} onChange={() => toggleLead(lead.id)}
-                        style={{ width: 15, height: 15, accentColor: TEAL, cursor: "pointer" }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.company}</p>
-                        <p style={{ margin: 0, fontSize: 11, color: MID }}>{lead.email}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                {reviewLeads.map(lead => (
+                  <ReviewLeadCard
+                    key={lead.id}
+                    lead={lead}
+                    preview={reviewPreviews.find(p => p.id === lead.id) ?? { id: lead.id, subject: "", text: "" }}
+                    selected={selectedIds.has(lead.id)}
+                    onToggle={() => setSelectedIds(prev => {
+                      const next = new Set(prev);
+                      next.has(lead.id) ? next.delete(lead.id) : next.add(lead.id);
+                      return next;
+                    })}
+                    editMap={editMap}
+                    onEdit={handleEdit}
+                  />
+                ))}
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
                   <button onClick={sendReviewed} disabled={sending || selectedIds.size === 0}
                     style={{ background: selectedIds.size === 0 ? "#e5e7eb" : GOLD, color: selectedIds.size === 0 ? "#9ca3af" : INK, border: "none", borderRadius: 8, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: selectedIds.size === 0 ? "default" : "pointer" }}>
                     {sending ? "Sending…" : `Send ${selectedIds.size} selected`}
                   </button>
-                  <button onClick={() => { setReviewLeads([]); setSelectedIds(new Set()); setReviewResult(""); }}
+                  <button onClick={() => { setReviewLeads([]); setReviewPreviews([]); setSelectedIds(new Set()); setEditMap({}); setReviewResult(""); }}
                     style={{ background: "none", border: "none", color: MID, fontSize: 12, cursor: "pointer" }}>cancel</button>
-                  <span style={{ fontSize: 12, color: MID }}>{selectedIds.size} of {reviewLeads.length} selected</span>
+                  <span style={{ fontSize: 12, color: MID }}>{selectedIds.size}/{reviewLeads.length} · {Object.keys(editMap).length} edited</span>
                 </div>
               </div>
             )}
             {reviewResult && <p style={{ fontSize: 13, color: reviewResult.startsWith("Error") ? "#b91c1c" : "#166534", margin: "12px 0 0", fontWeight: 500 }}>{reviewResult}</p>}
           </div>
 
-          {/* Option 2: Direct send 20 */}
+          {/* Direct send 20 */}
           <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "22px 24px" }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: INK, margin: "0 0 4px" }}>Send today's {batchSize} directly</p>
             <p style={{ fontSize: 13, color: MID, margin: "0 0 16px" }}>Takes the next {batchSize} leads, verifies each address, and sends immediately.</p>
 
             {!confirming ? (
               <button onClick={() => setConfirming(true)} disabled={pending || stats.new === 0}
-                style={{ background: stats.new === 0 ? "#cbd5d5" : TEAL, color: "#fff", border: "none", borderRadius: 8, padding: "11px 22px", fontSize: 14, fontWeight: 600, cursor: pending || stats.new === 0 ? "default" : "pointer" }}>
+                style={{ background: stats.new === 0 ? "#e5e7eb" : TEAL, color: stats.new === 0 ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, padding: "11px 22px", fontSize: 14, fontWeight: 600, cursor: pending || stats.new === 0 ? "default" : "pointer" }}>
                 {pending ? "Sending…" : stats.new === 0 ? "No leads left" : `Send ${Math.min(batchSize, stats.new)} now`}
               </button>
             ) : (
@@ -254,7 +365,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
           <div style={{ padding: "18px 24px 14px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
               <p style={{ fontSize: 14, fontWeight: 700, color: INK, margin: 0 }}>Lead List</p>
-              <p style={{ fontSize: 12, color: MID, margin: "3px 0 0" }}>{leads.length} contacted · {stats.new.toLocaleString("en-IN")} remaining</p>
+              <p style={{ fontSize: 12, color: MID, margin: "3px 0 0" }}>{leads.length} contacted · {stats.new.toLocaleString("en-IN")} remaining · click a status chip to change it</p>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search company, email or sender…"
@@ -262,10 +373,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
                 style={{ border: `1.5px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, color: INK, background: "#fff", outline: "none" }}>
                 <option value="all">All statuses</option>
-                <option value="sent">Sent</option>
-                <option value="replied">Replied</option>
-                <option value="bounced">Bounced</option>
-                <option value="skipped">Skipped</option>
+                {STATUS_OPTS.map(o => <option key={o} value={o}>{STATUS_STYLE[o]?.label ?? o}</option>)}
               </select>
               <button onClick={refreshLeads} disabled={pending}
                 style={{ background: "none", border: `1.5px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", fontSize: 12, color: MID, cursor: "pointer" }}>
@@ -294,7 +402,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
                     <td style={{ padding: "11px 16px", color: MID, fontSize: 12 }}>{lead.email}</td>
                     <td style={{ padding: "11px 16px", whiteSpace: "nowrap" }}><SenderChip name={lead.sent_by} /></td>
                     <td style={{ padding: "11px 16px", whiteSpace: "nowrap" }}>
-                      <StatusChip status={lead.status} />
+                      <StatusCell lead={lead} onChanged={handleStatusChange} />
                       {lead.error && <span style={{ marginLeft: 6, fontSize: 11, color: "#b91c1c", cursor: "help" }} title={lead.error}>⚠</span>}
                     </td>
                     <td style={{ padding: "11px 16px", color: MID, fontSize: 12, whiteSpace: "nowrap" }}>{fmtDate(lead.sent_at)}</td>
