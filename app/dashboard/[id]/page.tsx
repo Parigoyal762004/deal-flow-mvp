@@ -2,7 +2,6 @@ import { createServerClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import type { Deal, DDChecklistItem } from "@/lib/types";
 import { DD_ITEMS } from "@/lib/dd-items";
-import { DDChecklist } from "@/components/DDChecklist";
 import { formatDate, statusColor } from "@/lib/utils";
 import { BarChart3, ArrowLeft, ExternalLink, FileText } from "lucide-react";
 import Link from "next/link";
@@ -185,10 +184,60 @@ export default async function DealDetailPage({
         </div>
       )}
 
-      {/* DD Checklist */}
-      <div>
-        <h2 className="section-title mb-4">Document Due Diligence Checklist</h2>
-        <DDChecklist items={checklistItems} dealId={id} />
+      {/* DD Checklist — summary card linking to the dedicated page */}
+      <div className="card p-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-base">📋</span>
+              <h2 className="text-base font-semibold text-slate-900">Due Diligence Checklist</h2>
+            </div>
+            <p className="text-sm text-slate-500">
+              {checklistItems.filter(i => i.status === "received").length} of{" "}
+              {checklistItems.filter(i => i.status !== "na").length} documents received
+              {checklistItems.filter(i => i.status === "missing").length > 0 && (
+                <span className="text-red-500 ml-2">
+                  · {checklistItems.filter(i => i.status === "missing").length} missing
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-2xl font-bold ${
+              ddPct === 100 ? "text-emerald-600" : ddPct >= 60 ? "text-brand-600" : ddPct >= 30 ? "text-yellow-600" : "text-slate-400"
+            }`}>{ddPct}%</span>
+            <Link
+              href={`/dashboard/${id}/dd`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+            >
+              Open Checklist →
+            </Link>
+          </div>
+        </div>
+
+        {/* Mini progress bar */}
+        <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              ddPct === 100 ? "bg-emerald-500" : ddPct >= 60 ? "bg-brand-500" : ddPct >= 30 ? "bg-yellow-500" : "bg-slate-300"
+            }`}
+            style={{ width: `${ddPct}%` }}
+          />
+        </div>
+
+        {/* Status breakdown */}
+        <div className="flex gap-4 mt-3 flex-wrap">
+          {[
+            { label: "Received", count: checklistItems.filter(i => i.status === "received").length, color: "text-emerald-600" },
+            { label: "Pending",  count: checklistItems.filter(i => i.status === "pending").length,  color: "text-yellow-600" },
+            { label: "Missing",  count: checklistItems.filter(i => i.status === "missing").length,  color: "text-red-500"    },
+            { label: "N/A",      count: checklistItems.filter(i => i.status === "na").length,       color: "text-slate-400"  },
+          ].map(s => (
+            <span key={s.label} className="text-xs text-slate-500">
+              {s.label}: <span className={`font-semibold ${s.color}`}>{s.count}</span>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
