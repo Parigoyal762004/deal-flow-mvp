@@ -101,12 +101,14 @@ export interface CampaignLeadRow {
   error: string | null;
 }
 
-// Fetch leads for the campaign dashboard — most recently sent first, then new ones.
-export async function getCampaignLeads(limit = 200): Promise<CampaignLeadRow[]> {
+// Fetch contacted leads only (sent/replied/bounced/skipped/suppressed) — not queued.
+// Ordered most-recent first. No arbitrary cap since the contacted set is small.
+export async function getCampaignLeads(limit = 2000): Promise<CampaignLeadRow[]> {
   const supa = createServerClient();
   const { data } = await supa
     .from("leads")
     .select("id, company, first_name, email, status, sent_at, error")
+    .in("status", ["sent", "replied", "bounced", "skipped", "suppressed"])
     .order("sent_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
