@@ -194,11 +194,12 @@ export function DealForm() {
             <label className="form-label">
               <Globe className="inline w-3.5 h-3.5 mr-1 text-slate-400" />
               Website URL
+              <span className="ml-1.5 text-xs font-normal text-slate-400">(optional)</span>
             </label>
             <input
               {...register("website_url")}
               placeholder="https://acme.com"
-              type="url"
+              type="text"
               className="form-input"
             />
             {errors.website_url && <p className="form-error">{errors.website_url.message}</p>}
@@ -208,11 +209,12 @@ export function DealForm() {
             <label className="form-label">
               <Linkedin className="inline w-3.5 h-3.5 mr-1 text-slate-400" />
               LinkedIn URL
+              <span className="ml-1.5 text-xs font-normal text-slate-400">(optional)</span>
             </label>
             <input
               {...register("linkedin_url")}
               placeholder="https://linkedin.com/company/acme"
-              type="url"
+              type="text"
               className="form-input"
             />
             {errors.linkedin_url && <p className="form-error">{errors.linkedin_url.message}</p>}

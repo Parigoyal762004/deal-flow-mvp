@@ -101,6 +101,28 @@ export interface CampaignLeadRow {
   sent_at: string | null;
   sent_by: string | null;
   error: string | null;
+  linkedin_at: string | null;
+}
+
+// ── LinkedIn follow-up queue ─────────────────────────────────────────────────
+// Returns leads emailed 3+ days ago with no reply and no LinkedIn follow-up yet.
+export async function getLinkedInFollowups(): Promise<CampaignLeadRow[]> {
+  const supa = createServerClient();
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supa
+    .from("leads")
+    .select("id, company, first_name, email, status, sent_at, sent_by, error, linkedin_at")
+    .eq("status", "sent")
+    .lt("sent_at", threeDaysAgo)
+    .is("linkedin_at", null)
+    .order("sent_at", { ascending: true })
+    .limit(100);
+  return data ?? [];
+}
+
+export async function markLinkedInDone(leadId: string): Promise<void> {
+  const supa = createServerClient();
+  await supa.from("leads").update({ linkedin_at: new Date().toISOString() }).eq("id", leadId);
 }
 
 // Fetch contacted leads only (sent/replied/bounced/skipped/suppressed) — not queued.
@@ -108,7 +130,7 @@ export async function getCampaignLeads(limit = 2000): Promise<CampaignLeadRow[]>
   const supa = createServerClient();
   const { data } = await supa
     .from("leads")
-    .select("id, company, first_name, email, status, sent_at, sent_by, error")
+    .select("id, company, first_name, email, status, sent_at, sent_by, error, linkedin_at")
     .in("status", ["sent", "replied", "bounced", "skipped", "suppressed"])
     .order("sent_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
@@ -121,7 +143,7 @@ export async function previewNextLeads(count: number): Promise<CampaignLeadRow[]
   const supa = createServerClient();
   const { data } = await supa
     .from("leads")
-    .select("id, company, first_name, email, status, sent_at, sent_by, error")
+    .select("id, company, first_name, email, status, sent_at, sent_by, error, linkedin_at")
     .eq("status", "new")
     .order("created_at", { ascending: true })
     .limit(count);

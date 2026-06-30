@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 const TEAL = "#1A4A44", GOLD = "#D4A017", INK = "#28112B", MID = "#453643", BORDER = "#d6e5e2", OFF = "#E5F4E3";
 
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,7 +56,25 @@ export default function LoginPage() {
         <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="pari, rohit, eva, akshita" required style={input} />
 
         <label style={label}>Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required style={input} />
+        <div style={{ position: "relative" }}>
+          <input
+            type={showPw ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+            style={{ ...input, paddingRight: 42 }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPw(v => !v)}
+            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#6b7280", padding: 0, display: "flex", alignItems: "center" }}
+            tabIndex={-1}
+            aria-label={showPw ? "Hide password" : "Show password"}
+          >
+            {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        </div>
 
         {error && <p style={{ fontSize: 12.5, color: "#b91c1c", margin: "12px 0 0" }}>{error}</p>}
 

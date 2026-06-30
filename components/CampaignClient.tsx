@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import {
   runBatchAction, runTestAction, getLeadsAction,
   previewBatchAction, sendSelectedAction, updateLeadStatusAction,
-  convertLeadToDealAction,
+  convertLeadToDealAction, getLinkedInFollowupsAction, markLinkedInDoneAction,
 } from "@/app/campaign/actions";
 import type { CampaignLeadRow, CampaignStats, LeadEmailPreview } from "@/lib/campaign";
 
@@ -246,6 +246,36 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
     });
   }
 
+  // ── LinkedIn follow-up queue ───────────────────────────────────────────────
+  const [linkedInLeads, setLinkedInLeads] = useState<CampaignLeadRow[]>([]);
+  const [linkedInLoaded, setLinkedInLoaded] = useState(false);
+  const [loadingLinkedIn, startLoadLinkedIn] = useTransition();
+  const [markingLinkedIn, setMarkingLinkedIn] = useState<string | null>(null);
+
+  function loadLinkedIn() {
+    startLoadLinkedIn(async () => {
+      const r = await getLinkedInFollowupsAction();
+      if (r.ok) { setLinkedInLeads(r.leads); setLinkedInLoaded(true); }
+    });
+  }
+
+  async function markLinkedIn(leadId: string) {
+    setMarkingLinkedIn(leadId);
+    const r = await markLinkedInDoneAction(leadId);
+    if (r.ok) setLinkedInLeads(prev => prev.filter(l => l.id !== leadId));
+    setMarkingLinkedIn(null);
+  }
+
+  function linkedInSearchUrl(lead: CampaignLeadRow): string {
+    const q = encodeURIComponent(`${lead.first_name ?? ""} ${lead.company}`.trim());
+    return `https://www.linkedin.com/search/results/people/?keywords=${q}`;
+  }
+
+  function daysSince(iso: string | null): number {
+    if (!iso) return 0;
+    return Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
+  }
+
   // ── Convert replied lead to deal ──────────────────────────────────────────────
   const [converting, startConvert] = useTransition();
   const [convertingId, setConvertingId] = useState<string | null>(null);
@@ -365,6 +395,69 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
             </div>
           );
         })()}
+
+        {/* LinkedIn Follow-up Queue */}
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 12, padding: "20px 24px", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const, marginBottom: linkedInLoaded ? 16 : 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>🔗</span>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#14532d", margin: 0 }}>LinkedIn Follow-up Queue</p>
+                <p style={{ fontSize: 12, color: "#166534", margin: "2px 0 0" }}>
+                  Leads emailed 3+ days ago with no reply — time to connect on LinkedIn.
+                </p>
+              </div>
+            </div>
+            {!linkedInLoaded ? (
+              <button onClick={loadLinkedIn} disabled={loadingLinkedIn}
+                style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const }}>
+                {loadingLinkedIn ? "Loading…" : "Check follow-ups"}
+              </button>
+            ) : (
+              <span style={{ fontSize: 12, color: "#166534", fontWeight: 600 }}>
+                {linkedInLeads.length === 0 ? "All caught up ✓" : `${linkedInLeads.length} due`}
+              </span>
+            )}
+          </div>
+
+          {linkedInLoaded && linkedInLeads.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+              {linkedInLeads.map(lead => (
+                <div key={lead.id} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 9, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" as const }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#dcfce7", color: "#15803d", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {lead.company.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: INK }}>{lead.company}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: 12, color: MID }}>
+                      {lead.first_name ?? ""}{lead.first_name ? " · " : ""}{lead.email}
+                    </p>
+                  </div>
+                  <span style={{ fontSize: 11, background: "#fef9ec", color: "#92400e", border: "1px solid #fde68a", borderRadius: 12, padding: "2px 8px", fontWeight: 700, flexShrink: 0 }}>
+                    {daysSince(lead.sent_at)}d since email
+                  </span>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    <a href={linkedInSearchUrl(lead)} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#0a66c2", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" as const }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+                      Find on LinkedIn
+                    </a>
+                    <button onClick={() => markLinkedIn(lead.id)} disabled={markingLinkedIn === lead.id}
+                      style={{ background: "#fff", color: "#16a34a", border: "1.5px solid #86efac", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const }}>
+                      {markingLinkedIn === lead.id ? "…" : "✓ Done"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {linkedInLoaded && linkedInLeads.length === 0 && (
+            <p style={{ fontSize: 13, color: "#16a34a", margin: 0 }}>
+              No leads are due for LinkedIn follow-up right now. Check back after your next email batch.
+            </p>
+          )}
+        </div>
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 28 }}>

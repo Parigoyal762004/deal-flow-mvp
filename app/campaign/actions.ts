@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import {
   sendNextBatch, sendTestTo, getCampaignStats, getCampaignLeads,
   previewNextLeads, sendSelectedLeads, buildLeadPreviews, DAILY_BATCH,
+  getLinkedInFollowups, markLinkedInDone,
 } from "@/lib/campaign";
 import { createServerClient } from "@/lib/supabase-server";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
@@ -134,6 +135,26 @@ export async function convertLeadToDealAction(leadId: string) {
 
 const VALID_STATUSES = ["new", "sent", "replied", "bounced", "skipped", "suppressed"] as const;
 type LeadStatus = (typeof VALID_STATUSES)[number];
+
+export async function getLinkedInFollowupsAction() {
+  try {
+    const leads = await getLinkedInFollowups();
+    return { ok: true as const, leads };
+  } catch (e) {
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+export async function markLinkedInDoneAction(leadId: string) {
+  const operator = await currentOperator();
+  if (!operator) return { ok: false as const, error: "Unauthorized." };
+  try {
+    await markLinkedInDone(leadId);
+    return { ok: true as const };
+  } catch (e) {
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
 
 export async function updateLeadStatusAction(id: string, status: LeadStatus) {
   const operator = await currentOperator();
