@@ -116,6 +116,19 @@ export default async function DDPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
 
+      {/* How to use */}
+      <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-xs text-slate-500 flex gap-3 items-start">
+        <span className="text-base flex-shrink-0">💡</span>
+        <div>
+          <strong className="text-slate-600">How to use:</strong>{" "}
+          Click any row to change its status — <span className="font-medium text-emerald-600">Received</span>,{" "}
+          <span className="font-medium text-amber-600">Pending</span>,{" "}
+          <span className="font-medium text-red-500">Missing</span>, or{" "}
+          <span className="font-medium text-slate-400">N/A</span>.
+          Add notes to any item for context. Only items marked <em>Received</em> count toward progress.
+        </div>
+      </div>
+
       {/* Checklist */}
       <DDChecklist items={items} dealId={id} />
     </div>

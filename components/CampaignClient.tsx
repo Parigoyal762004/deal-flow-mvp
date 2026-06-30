@@ -478,34 +478,58 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: OFF }}>
-                  {["Company", "Contact", "Email", "Sent by", "Status", "Date Sent"].map(h => (
-                    <th key={h} style={{ textAlign: "left", padding: "10px 16px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MID, whiteSpace: "nowrap" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLeads.length === 0 && (
-                  <tr><td colSpan={6} style={{ padding: "28px", color: MID, textAlign: "center" }}>No leads match your filter.</td></tr>
-                )}
-                {filteredLeads.map((lead, i) => (
-                  <tr key={lead.id} style={{ borderTop: `1px solid ${BORDER}`, background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                    <td style={{ padding: "11px 16px", color: INK, fontWeight: 600, whiteSpace: "nowrap" }}>{lead.company}</td>
-                    <td style={{ padding: "11px 16px", color: MID, whiteSpace: "nowrap" }}>{lead.first_name ?? ""}</td>
-                    <td style={{ padding: "11px 16px", color: MID, fontSize: 12 }}>{lead.email}</td>
-                    <td style={{ padding: "11px 16px", whiteSpace: "nowrap" }}><SenderChip name={lead.sent_by} /></td>
-                    <td style={{ padding: "11px 16px", whiteSpace: "nowrap" }}>
-                      <StatusCell lead={lead} onChanged={handleStatusChange} />
-                      {lead.error && <span style={{ marginLeft: 6, fontSize: 11, color: "#b91c1c", cursor: "help" }} title={lead.error}>⚠</span>}
-                    </td>
-                    <td style={{ padding: "11px 16px", color: MID, fontSize: 12, whiteSpace: "nowrap" }}>{fmtDate(lead.sent_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Card-based lead list — no horizontal scroll */}
+          <div>
+            {filteredLeads.length === 0 && (
+              <p style={{ padding: "28px 24px", color: MID, textAlign: "center", fontSize: 13 }}>No leads match your filter.</p>
+            )}
+            {filteredLeads.map((lead) => (
+              <div key={lead.id} style={{
+                borderTop: `1px solid ${BORDER}`,
+                padding: "12px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                flexWrap: "wrap" as const,
+              }}>
+                {/* Avatar */}
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                  background: TEAL + "18", color: TEAL, fontWeight: 700, fontSize: 14,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {lead.company.charAt(0).toUpperCase()}
+                </div>
+
+                {/* Company + contact */}
+                <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: INK, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {lead.company}
+                  </p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: MID, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {lead.first_name ? `${lead.first_name} · ` : ""}{lead.email}
+                  </p>
+                </div>
+
+                {/* Sender */}
+                <div style={{ flexShrink: 0 }}>
+                  <SenderChip name={lead.sent_by} />
+                </div>
+
+                {/* Status chip + error */}
+                <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                  <StatusCell lead={lead} onChanged={handleStatusChange} />
+                  {lead.error && (
+                    <span title={lead.error} style={{ fontSize: 14, cursor: "help" }}>⚠️</span>
+                  )}
+                </div>
+
+                {/* Date */}
+                <div style={{ marginLeft: "auto", fontSize: 12, color: MID, flexShrink: 0, whiteSpace: "nowrap" as const }}>
+                  {fmtDate(lead.sent_at)}
+                </div>
+              </div>
+            ))}
           </div>
 
           {filteredLeads.length > 0 && (

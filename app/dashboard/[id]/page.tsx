@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Deal, DDChecklistItem } from "@/lib/types";
 import { DD_ITEMS } from "@/lib/dd-items";
 import { formatDate, statusColor } from "@/lib/utils";
-import { BarChart3, ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { BarChart3, ArrowLeft, ExternalLink, FileText, CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import DealDetailActions from "@/components/DealDetailActions";
 
@@ -77,6 +77,14 @@ export default async function DealDetailPage({
         <ArrowLeft className="w-4 h-4" />
         Back to Pipeline
       </Link>
+
+      {/* Meeting held banner */}
+      {deal.meeting_held && (
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg mb-4 text-sm text-emerald-700">
+          <CalendarCheck className="w-4 h-4 flex-shrink-0" />
+          <span>Meeting held — Due diligence checklist is active. Track all required documents below.</span>
+        </div>
+      )}
 
       {/* Deal header */}
       <div className="card p-6 mb-6">
@@ -176,21 +184,31 @@ export default async function DealDetailPage({
         </div>
       </div>
 
-      {/* AI Summary */}
-      {deal.ai_summary && (
-        <div className="card p-5 mb-6">
-          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium mb-2">AI Summary</p>
-          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{deal.ai_summary}</p>
-        </div>
-      )}
+      {/* Info row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* AI Summary */}
+        {deal.ai_summary && (
+          <div className="card p-5 border-l-4 border-l-brand-400">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">🤖</span>
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">AI Analysis</p>
+            </div>
+            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{deal.ai_summary}</p>
+            <p className="text-xs text-slate-400 mt-2">Generated automatically from the pitch deck</p>
+          </div>
+        )}
 
-      {/* Notes */}
-      {deal.notes && (
-        <div className="card p-5 mb-6">
-          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium mb-2">Notes</p>
-          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{deal.notes}</p>
-        </div>
-      )}
+        {/* Notes */}
+        {deal.notes && (
+          <div className="card p-5 border-l-4 border-l-amber-400">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">📝</span>
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Notes</p>
+            </div>
+            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{deal.notes}</p>
+          </div>
+        )}
+      </div>
 
       {/* DD Checklist — gated behind meeting_held */}
       {deal.meeting_held ? (
