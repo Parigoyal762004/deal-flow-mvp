@@ -118,7 +118,7 @@ export default function DashboardClient({ deals, ddPctByDeal, currentUser, owner
             <HelpCircle className="w-3.5 h-3.5" />
             How it works
           </button>
-          <a href="/" className="btn-primary text-sm">+ Submit Deal</a>
+          <a href="/submit" className="btn-primary text-sm">+ Submit Deal</a>
         </div>
       </div>
 
