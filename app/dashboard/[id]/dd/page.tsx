@@ -14,12 +14,39 @@ export default async function DDPage({ params }: { params: Promise<{ id: string 
 
   const { data: dealData, error } = await supabase
     .from("deals")
-    .select("id, startup_name, founder_name, stage, industry")
+    .select("id, startup_name, founder_name, stage, industry, meeting_held")
     .eq("id", id)
     .single();
 
   if (error || !dealData) notFound();
-  const deal = dealData as Pick<Deal, "id" | "startup_name" | "founder_name" | "stage" | "industry">;
+  const deal = dealData as Pick<Deal, "id" | "startup_name" | "founder_name" | "stage" | "industry" | "meeting_held">;
+
+  // Gate: DD only available after a meeting has been held
+  if (!deal.meeting_held) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <Link href={`/dashboard/${id}`}
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Back to deal
+        </Link>
+        <div className="card p-10 text-center">
+          <ClipboardCheck className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-slate-700 mb-2">No meeting held yet</h2>
+          <p className="text-sm text-slate-400 max-w-sm mx-auto">
+            Due diligence is only available for companies you&apos;ve met with. Go back to the deal page and click{" "}
+            <strong className="text-brand-600">Mark Meeting Held</strong> to unlock the checklist.
+          </p>
+          <Link
+            href={`/dashboard/${id}`}
+            className="inline-flex items-center gap-1.5 mt-6 px-4 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+          >
+            ← Back to deal
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch or seed the checklist
   let { data: checklistRows } = await supabase

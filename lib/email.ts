@@ -241,9 +241,11 @@ export async function sendApprovalEmail(deal: Deal): Promise<void> {
 </table>
 <p style="margin:16px 0 0;text-align:center;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9ab4b4;">Akro Ventures &middot; Confidential Internal Use</p>`;
 
-  const transporter = createTransport();
-  const info = await transporter.sendMail({
-    from: `"Akro Ventures Deal Flow" <${SMTP_USER}>`,
+  // Use the deal owner's mailbox (credentials confirmed set on Vercel).
+  // info@ transport is NOT used here — SMTP_PASS (info@) was never configured.
+  const sender = resolveSender(deal.owner ?? "pari");
+  const info = await transportFor(sender).sendMail({
+    from: `"Akro Ventures Deal Flow" <${sender.email}>`,
     to: recipients.join(", "),
     subject: `[Review] ${deal.startup_name} · ${stageBadge}${industry ? " · " + industry : ""}`,
     html: shell(`Deal Review: ${deal.startup_name}`, body),

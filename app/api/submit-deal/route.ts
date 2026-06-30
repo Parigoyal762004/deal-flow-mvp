@@ -123,13 +123,22 @@ export async function POST(req: NextRequest) {
 async function processInBackground(deal: Record<string, unknown>) {
   const supabase = createServerClient();
 
+  // ── Step 1: AI analysis (best-effort — never blocks the approval email) ──
+  let summary: string | null = null;
+  let draftEmail: string | null = null;
   try {
-    // Step 1: Analyse pitch deck with Claude
     console.log(`[process] Analysing deal ${deal.id} - ${deal.startup_name}`);
-    const { summary, draftEmail } = await analyzePitchDeck(deal as unknown as Parameters<typeof analyzePitchDeck>[0]);
+    const result = await analyzePitchDeck(deal as unknown as Parameters<typeof analyzePitchDeck>[0]);
+    summary = result.summary;
+    draftEmail = result.draftEmail;
+    console.log(`[process] AI analysis done for ${deal.id}`);
+  } catch (err) {
+    console.error("[process] AI analysis failed (non-fatal):", err);
+  }
 
-    // Step 2: Save draft + summary to Supabase
-    const { error: updateError } = await supabase
+  // ── Step 2: Persist whatever we got (AI or fallback) ─────────────────────
+  try {
+    await supabase
       .from("deals")
       .update({
         ai_summary: summary,
@@ -137,27 +146,24 @@ async function processInBackground(deal: Record<string, unknown>) {
         email_status: "awaiting_approval",
       })
       .eq("id", deal.id as string);
+  } catch (err) {
+    console.error("[process] Supabase update failed:", err);
+  }
 
-    if (updateError) {
-      console.error("[process] Supabase update failed:", updateError);
-      return;
-    }
-
-    // Step 3: Fetch updated deal (with approval_token etc.)
+  // ── Step 3: Send approval email — always, regardless of AI result ─────────
+  try {
     const { data: updatedDeal } = await supabase
       .from("deals")
       .select("*")
       .eq("id", deal.id as string)
       .single();
 
-    if (!updatedDeal) return;
+    if (!updatedDeal) throw new Error("Deal not found after update");
 
-    // Step 4: Send internal approval email to team
     await sendApprovalEmail(updatedDeal);
     console.log(`[process] Approval email sent for deal ${deal.id}`);
   } catch (err) {
-    console.error("[process] Background processing failed:", err);
-    // Mark as failed in DB
+    console.error("[process] Failed to send approval email:", err);
     await supabase
       .from("deals")
       .update({ email_status: "failed" })

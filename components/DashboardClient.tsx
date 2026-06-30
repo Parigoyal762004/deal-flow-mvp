@@ -217,33 +217,37 @@ export default function DashboardClient({ deals, ddPctByDeal, currentUser, owner
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <a href={`/dashboard/${deal.id}/dd`} className="group block min-w-[100px]">
-                            {ddPctByDeal[deal.id] !== undefined ? (
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className={`text-xs font-semibold ${
-                                    ddPctByDeal[deal.id] === 100 ? "text-emerald-600"
-                                    : ddPctByDeal[deal.id] >= 60  ? "text-brand-600"
-                                    : ddPctByDeal[deal.id] >= 30  ? "text-yellow-600"
-                                    : "text-slate-400"
-                                  }`}>{ddPctByDeal[deal.id]}%</span>
-                                  <span className="text-[10px] text-slate-300 group-hover:text-brand-500 transition-colors">open →</span>
+                          {deal.meeting_held ? (
+                            <a href={`/dashboard/${deal.id}/dd`} className="group block min-w-[100px]">
+                              {ddPctByDeal[deal.id] !== undefined ? (
+                                <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className={`text-xs font-semibold ${
+                                      ddPctByDeal[deal.id] === 100 ? "text-emerald-600"
+                                      : ddPctByDeal[deal.id] >= 60  ? "text-brand-600"
+                                      : ddPctByDeal[deal.id] >= 30  ? "text-yellow-600"
+                                      : "text-slate-400"
+                                    }`}>{ddPctByDeal[deal.id]}%</span>
+                                    <span className="text-[10px] text-slate-300 group-hover:text-brand-500 transition-colors">open →</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden w-24">
+                                    <div className={`h-full rounded-full ${
+                                      ddPctByDeal[deal.id] === 100 ? "bg-emerald-500"
+                                      : ddPctByDeal[deal.id] >= 60  ? "bg-brand-500"
+                                      : ddPctByDeal[deal.id] >= 30  ? "bg-yellow-400"
+                                      : "bg-slate-300"
+                                    }`} style={{ width: `${ddPctByDeal[deal.id]}%` }} />
+                                  </div>
                                 </div>
-                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden w-24">
-                                  <div className={`h-full rounded-full ${
-                                    ddPctByDeal[deal.id] === 100 ? "bg-emerald-500"
-                                    : ddPctByDeal[deal.id] >= 60  ? "bg-brand-500"
-                                    : ddPctByDeal[deal.id] >= 30  ? "bg-yellow-400"
-                                    : "bg-slate-300"
-                                  }`} style={{ width: `${ddPctByDeal[deal.id]}%` }} />
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-slate-300 group-hover:text-brand-500 transition-colors">
-                                Start DD →
-                              </span>
-                            )}
-                          </a>
+                              ) : (
+                                <span className="text-xs text-slate-300 group-hover:text-brand-500 transition-colors">
+                                  Start DD →
+                                </span>
+                              )}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-slate-300 italic">No meeting yet</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-slate-500 whitespace-nowrap text-xs">
                           {rowTime(deal.created_at)}
