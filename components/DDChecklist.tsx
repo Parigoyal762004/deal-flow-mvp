@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { DDChecklistItem, DDStatus } from "@/lib/types";
 
 interface Props {
@@ -33,6 +34,7 @@ const TAG_LABEL: Record<string, string> = {
 };
 
 export function DDChecklist({ items: initialItems, dealId }: Props) {
+  const router = useRouter();
   const [items, setItems] = useState<DDChecklistItem[]>(initialItems);
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -55,8 +57,11 @@ export function DDChecklist({ items: initialItems, dealId }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deal_id: dealId, item_key: itemKey, ...updates }),
       });
+      // Bust the Next.js router cache so the dashboard and deal page
+      // show the updated DD% immediately when the user navigates back.
+      router.refresh();
     },
-    [dealId]
+    [dealId, router]
   );
 
   function handleStatusChange(itemKey: string, status: DDStatus) {

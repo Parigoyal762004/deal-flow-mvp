@@ -1,6 +1,8 @@
 import { createServerClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import type { Deal, DDChecklistItem } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 import { DD_ITEMS } from "@/lib/dd-items";
 import { formatDate, statusColor } from "@/lib/utils";
 import { BarChart3, ArrowLeft, ExternalLink, FileText, CalendarCheck } from "lucide-react";
