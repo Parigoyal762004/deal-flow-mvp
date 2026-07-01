@@ -104,7 +104,12 @@ export async function convertLeadToDealAction(leadId: string) {
     .eq("founder_email", lead.email)
     .maybeSingle();
 
-  if (existing) return { ok: false as const, error: "A deal for this email already exists.", dealId: existing.id };
+  if (existing) {
+    // Suppress the lead so it stops showing in the replies inbox even though
+    // we're not creating a new deal — it's already in the pipeline.
+    await supa.from("leads").update({ status: "suppressed" }).eq("id", leadId);
+    return { ok: false as const, error: "A deal for this email already exists.", dealId: existing.id };
+  }
 
   // Create the deal
   const token = crypto.randomUUID();
