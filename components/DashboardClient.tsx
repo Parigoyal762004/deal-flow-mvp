@@ -232,7 +232,7 @@ export default function DashboardClient({ deals, ddPctByDeal, currentUser, owner
       ) : (
         <div className="space-y-4">
           {groups.map((g, i) => (
-            <details key={g.label} open={i === 0} className="group card overflow-hidden">
+            <details key={query.trim() ? `q-${g.label}` : g.label} open={!!query.trim() || i === 0} className="group card overflow-hidden">
               <summary className="flex items-center gap-3 cursor-pointer select-none px-5 py-3.5 hover:bg-slate-50 [&::-webkit-details-marker]:hidden marker:content-none border-b border-slate-100 group-open:border-slate-100">
                 <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180 flex-shrink-0" />
                 <span className="text-sm font-semibold text-slate-900">{g.label}</span>
