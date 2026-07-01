@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   runBatchAction, runTestAction, getLeadsAction,
   previewBatchAction, sendSelectedAction, updateLeadStatusAction,
@@ -151,6 +152,7 @@ interface Props {
 }
 
 export default function CampaignClient({ stats: initial, leads: initialLeads, batchSize, currentUser }: Props) {
+  const router = useRouter();
   const [stats, setStats] = useState(initial);
   const [leads, setLeads] = useState(initialLeads);
 
@@ -280,6 +282,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
   const [converting, startConvert] = useTransition();
   const [convertingId, setConvertingId] = useState<string | null>(null);
   const [convertMsg, setConvertMsg] = useState<Record<string, string>>({});
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
 
   function convertToDeal(lead: CampaignLeadRow) {
     setConvertingId(lead.id);
@@ -288,7 +291,6 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
       const r = await convertLeadToDealAction(lead.id);
       setConvertingId(null);
       if (!r.ok) {
-        // If deal already exists, still surface the link
         if ("dealId" in r && r.dealId) {
           window.location.href = `/dashboard/${r.dealId}`;
         } else {
@@ -296,10 +298,21 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
         }
         return;
       }
-      // Remove from replied list and navigate to the new deal
+      // Remove from local list then navigate — DB is already updated by the action
       setLeads(prev => prev.filter(l => l.id !== lead.id));
+      router.refresh();
       window.location.href = `/dashboard/${r.dealId}`;
     });
+  }
+
+  async function dismissReply(leadId: string) {
+    setDismissingId(leadId);
+    // Optimistic UI removal
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: "suppressed" } : l));
+    // Persist to DB so it stays gone on refresh / for other users
+    await updateLeadStatusAction(leadId, "suppressed");
+    router.refresh();
+    setDismissingId(null);
   }
 
   // ── Status change in table ────────────────────────────────────────────────────
@@ -384,9 +397,10 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
                         {converting && convertingId === lead.id ? "Creating…" : "Convert to Deal →"}
                       </button>
                       <button
-                        onClick={() => handleStatusChange(lead.id, "suppressed")}
+                        onClick={() => dismissReply(lead.id)}
+                        disabled={dismissingId === lead.id}
                         style={{ background: "none", border: "1px solid #bfdbfe", borderRadius: 8, padding: "9px 12px", fontSize: 12, color: "#6b7280", cursor: "pointer" }}>
-                        Dismiss
+                        {dismissingId === lead.id ? "Dismissing…" : "Dismiss"}
                       </button>
                     </div>
                   </div>
