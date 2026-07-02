@@ -283,6 +283,7 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
   const [convertingId, setConvertingId] = useState<string | null>(null);
   const [convertMsg, setConvertMsg] = useState<Record<string, string>>({});
   const [dismissingId, setDismissingId] = useState<string | null>(null);
+  const [dismissError, setDismissError] = useState<Record<string, string>>({});
 
   function convertToDeal(lead: CampaignLeadRow) {
     setConvertingId(lead.id);
@@ -300,18 +301,21 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
       }
       // Remove from local list then navigate — DB is already updated by the action
       setLeads(prev => prev.filter(l => l.id !== lead.id));
-      router.refresh();
       window.location.href = `/dashboard/${r.dealId}`;
     });
   }
 
   async function dismissReply(leadId: string) {
     setDismissingId(leadId);
-    // Optimistic UI removal
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: "suppressed" } : l));
-    // Persist to DB so it stays gone on refresh / for other users
-    await updateLeadStatusAction(leadId, "suppressed");
-    router.refresh();
+    setDismissError(prev => ({ ...prev, [leadId]: "" }));
+    // Write to DB first — if this succeeds, the lead is permanently suppressed
+    const r = await updateLeadStatusAction(leadId, "suppressed");
+    if (r.ok) {
+      // Only update local state after confirmed DB write
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: "suppressed" } : l));
+    } else {
+      setDismissError(prev => ({ ...prev, [leadId]: "Dismiss failed — try again." }));
+    }
     setDismissingId(null);
   }
 
@@ -386,6 +390,9 @@ export default function CampaignClient({ stats: initial, leads: initialLeads, ba
                     {/* Error */}
                     {convertMsg[lead.id] && (
                       <p style={{ fontSize: 12, color: "#b91c1c", margin: 0, width: "100%" }}>{convertMsg[lead.id]}</p>
+                    )}
+                    {dismissError[lead.id] && (
+                      <p style={{ fontSize: 12, color: "#b91c1c", margin: 0, width: "100%" }}>{dismissError[lead.id]}</p>
                     )}
 
                     {/* Actions */}
