@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@/lib/supabase-server";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
-import { USERS } from "@/lib/users";
+import { USERS, isAdmin } from "@/lib/users";
 import type { Deal } from "@/lib/types";
 import DashboardClient from "@/components/DashboardClient";
 
@@ -11,11 +11,12 @@ export default async function DashboardPage() {
   const currentUser = await getSessionUser(cookies().get(SESSION_COOKIE)?.value);
 
   const supabase = createServerClient();
-  const { data: deals, error } = await supabase
-    .from("deals")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(5000);
+  const admin = isAdmin(currentUser);
+
+  let query = supabase.from("deals").select("*").order("created_at", { ascending: false }).limit(5000);
+  if (!admin && currentUser) query = query.eq("owner", currentUser);
+
+  const { data: deals, error } = await query;
 
   if (error) {
     return (
@@ -54,6 +55,7 @@ export default async function DashboardPage() {
       deals={rows}
       ddPctByDeal={ddPctByDeal}
       currentUser={currentUser}
+      isAdmin={admin}
       owners={USERS.map((u) => ({ username: u.username, displayName: u.displayName }))}
     />
   );

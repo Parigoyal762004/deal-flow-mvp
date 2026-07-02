@@ -43,6 +43,12 @@ export function getUser(username: string): TeamUser | null {
   return USERS.find((u) => u.username === username.trim().toLowerCase()) ?? null;
 }
 
+const ADMINS = new Set(["pari", "rohit"]);
+
+export function isAdmin(username: string | null | undefined): boolean {
+  return !!username && ADMINS.has(username.trim().toLowerCase());
+}
+
 async function sha256Hex(data: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(data));
   return Array.from(new Uint8Array(buf))

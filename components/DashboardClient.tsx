@@ -52,10 +52,11 @@ interface Props {
   deals: Deal[];
   ddPctByDeal: Record<string, number>;
   currentUser: string | null;
+  isAdmin?: boolean;
   owners: { username: string; displayName: string }[];
 }
 
-export default function DashboardClient({ deals, ddPctByDeal, currentUser, owners }: Props) {
+export default function DashboardClient({ deals, ddPctByDeal, currentUser, isAdmin, owners }: Props) {
   const [query, setQuery] = useState("");
   const [ownerFilter, setOwnerFilter] = useState<string>("all");
   const [showHelp, setShowHelp] = useState(false);
@@ -107,7 +108,9 @@ export default function DashboardClient({ deals, ddPctByDeal, currentUser, owner
             Deal Pipeline
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            All startup opportunities, grouped by submission date. Click any deal to see full details, DD checklist, or generate a mandate.
+            {isAdmin
+              ? "All startup opportunities, grouped by submission date. Click any deal to see full details, DD checklist, or generate a mandate."
+              : "Your deals, grouped by submission date. Click any deal to see full details, DD checklist, or generate a mandate."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -185,22 +188,24 @@ export default function DashboardClient({ deals, ddPctByDeal, currentUser, owner
           />
         </div>
 
-        <div className="relative flex items-center gap-2">
-          <Users className="w-4 h-4 text-slate-400" />
-          <select
-            value={ownerFilter}
-            onChange={(e) => setOwnerFilter(e.target.value)}
-            className="text-sm rounded-lg border border-slate-200 px-3 py-2 bg-white focus:outline-none focus:border-brand-400 cursor-pointer"
-          >
-            <option value="all">All owners</option>
-            {owners.map((o) => (
-              <option key={o.username} value={o.username}>{o.displayName}</option>
-            ))}
-            <option value="unassigned">Unassigned</option>
-          </select>
-        </div>
+        {isAdmin && (
+          <div className="relative flex items-center gap-2">
+            <Users className="w-4 h-4 text-slate-400" />
+            <select
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              className="text-sm rounded-lg border border-slate-200 px-3 py-2 bg-white focus:outline-none focus:border-brand-400 cursor-pointer"
+            >
+              <option value="all">All owners</option>
+              {owners.map((o) => (
+                <option key={o.username} value={o.username}>{o.displayName}</option>
+              ))}
+              <option value="unassigned">Unassigned</option>
+            </select>
+          </div>
+        )}
 
-        {currentUser && (
+        {isAdmin && currentUser && (
           <button
             onClick={() => setOwnerFilter(myDealsActive ? "all" : currentUser)}
             className={`text-sm px-3.5 py-2 rounded-lg border transition-colors ${
@@ -214,7 +219,7 @@ export default function DashboardClient({ deals, ddPctByDeal, currentUser, owner
         )}
 
         <span className="text-xs text-slate-400 ml-auto">
-          {filtered.length} of {deals.length} deals
+          {isAdmin ? `${filtered.length} of ${deals.length} deals` : `${filtered.length} deals`}
         </span>
       </div>
 
