@@ -41,6 +41,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <a href="/campaign" className="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors">
                   Campaign
                 </a>
+                <a href="/my-stats" className="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors">
+                  My Stats
+                </a>
                 <span className="hidden md:flex items-center gap-1.5 text-sm text-plum-500">
                   <span className="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold flex items-center justify-center">
                     {ownerDisplayName(user).charAt(0)}
